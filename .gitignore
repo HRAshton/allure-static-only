@@ -1,0 +1,9 @@
+node_modules/
+dist/
+coverage/
+.allure-workspace/
+.cache/
+*.log
+.DS_Store
+.env*
+!.env.example
