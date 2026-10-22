@@ -16,6 +16,18 @@ export interface AwesomePayload {
   readonly binaries: readonly AwesomeBinaryFile[];
 }
 
+// Browser previews require a known, matched extension and MIME type.
+// Executable and mismatched types always remain opaque binary downloads.
+const PREVIEW_MIME_BY_EXTENSION: Readonly<Record<string, string>> = {
+  ".png": "image/png",
+  ".jpg": "image/jpeg",
+  ".jpeg": "image/jpeg",
+  ".webp": "image/webp",
+  ".txt": "text/plain",
+  ".log": "text/plain",
+  ".json": "application/json",
+};
+
 type StatusStatistic = { total: number } & Partial<Record<TestStatus, number>>;
 
 function statistic(tests: readonly TestCase[]): StatusStatistic {
@@ -43,19 +55,22 @@ export function awesomeReportData(report: TestReport): AwesomePayload {
 
   const attachmentStep = ({ name, sourcePath, mimeType }: ReportAttachment) => {
     const lastName = sourcePath.split("/").at(-1) ?? "";
-    const extension = /\.[a-z0-9]{1,12}$/i.exec(lastName)?.[0] ?? "";
+    const extension = /\.[a-z0-9]{1,12}$/i.exec(lastName)?.[0].toLowerCase() ?? "";
     const id = `attachment-${attachmentNumber++}`;
-    const safeMime = ["image/png", "image/jpeg", "image/webp", "text/plain", "application/json"];
+    const previewMime = PREVIEW_MIME_BY_EXTENSION[extension];
     const contentType =
-      mimeType && safeMime.includes(mimeType) ? mimeType : "application/octet-stream";
-    binaries.push({ targetPath: `data/attachments/${id}${extension}`, sourcePath });
+      previewMime !== undefined && previewMime === mimeType
+        ? previewMime
+        : "application/octet-stream";
+    const safeExtension = contentType === "application/octet-stream" ? "" : extension;
+    binaries.push({ targetPath: `data/attachments/${id}${safeExtension}`, sourcePath });
     return {
       type: "attachment",
       link: {
         id,
         name,
         originalFileName: lastName,
-        ext: extension,
+        ext: safeExtension,
         contentType,
         used: true,
         missed: false,
