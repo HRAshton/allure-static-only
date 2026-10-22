@@ -54,7 +54,7 @@ run("corepack", ["yarn", "build"], workspace);
 
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-for (const moduleName of ["bootstrap.mjs", "browser-import.mjs", "import-generated.mjs"]) {
+for (const moduleName of ["bootstrap.mjs", "browser-import.mjs", "import-generated.mjs", "importer.css"]) {
   await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
 }
 run("npm", ["run", "build:browser"]);
@@ -85,6 +85,7 @@ const html = `<!doctype html>
     <base href="./" />
     <title>Allure Static Only</title>
     <link rel="icon" href="data:," />
+    <link rel="stylesheet" href="./importer.css" />
     ${cssTag}
     <script src="./bootstrap.mjs"></script>
     <script type="module" src="./import-generated.mjs"></script>
@@ -99,8 +100,9 @@ const html = `<!doctype html>
          Download a sample JUnit report</a> or
          <a href="./demo/ctrf-sample.json" download="ctrf-sample.json">
          download a sample CTRF report</a> to try the importer.</p>
-      <div id="allure-drop-target" role="region" aria-label="Drop report files">
-        <p>Drop report files here or select a directory.</p>
+      <div id="allure-drop-target" role="button" tabindex="0"
+           aria-controls="allure-files-input" aria-label="Choose report files or drop them here">
+        <p>Drop report files here, or press Enter or Space to select files.</p>
       </div>
       <label for="allure-input">Report directory</label>
       <input id="allure-input" type="file" webkitdirectory multiple />

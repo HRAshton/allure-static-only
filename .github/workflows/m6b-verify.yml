@@ -1,0 +1,38 @@
+name: M6b keyboard and hostile ZIP acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m6b-import-hardening
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6b-import-hardening
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Verify lint, boundaries, strict TypeScript and security unit tests
+        run: |
+          npm ci
+          npm run verify
+      - name: Build pinned upstream Allure and browser regression fixtures
+        run: |
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+      - name: Browser keyboard, mobile viewport and no-upload smoke
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs

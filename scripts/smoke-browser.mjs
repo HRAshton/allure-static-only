@@ -68,6 +68,41 @@ try {
     }
   });
   await page.goto(`http://127.0.0.1:${port}/`);
+  const dropTarget = page.locator("#allure-drop-target");
+  if (
+    (await dropTarget.getAttribute("role")) !== "button" ||
+    (await dropTarget.getAttribute("tabindex")) !== "0"
+  ) {
+    throw new Error("Import drop target is not keyboard accessible.");
+  }
+  await dropTarget.focus();
+  const focused = await page.evaluate(() => document.activeElement?.id);
+  if (focused !== "allure-drop-target") {
+    throw new Error("Import drop target cannot receive keyboard focus.");
+  }
+  await page.evaluate(() => {
+    const picker = document.getElementById("allure-files-input");
+    picker.click = () => {
+      picker.dataset.keyboardClicks = String(Number(picker.dataset.keyboardClicks ?? 0) + 1);
+    };
+  });
+  await page.keyboard.press("Enter");
+  await page.keyboard.press("Space");
+  const pickerClicks = await page.evaluate(() => {
+    const picker = document.getElementById("allure-files-input");
+    const clicks = Number(picker.dataset.keyboardClicks ?? 0);
+    delete picker.click;
+    return clicks;
+  });
+  if (pickerClicks !== 2) {
+    throw new Error(`Keyboard picker activation failed: ${pickerClicks}`);
+  }
+  await page.setViewportSize({ width: 360, height: 740 });
+  const mobile = await page.locator("#allure-importer").boundingBox();
+  if (!mobile || mobile.x < -1 || mobile.x + mobile.width > 361) {
+    throw new Error(`Importer exceeds mobile viewport: ${JSON.stringify(mobile)}`);
+  }
+  await page.setViewportSize({ width: 1280, height: 720 });
   const security = await page.evaluate(() => ({
     csp: document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content,
     bootstrap: [...document.scripts].some(

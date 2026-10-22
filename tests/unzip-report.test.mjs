@@ -92,3 +92,41 @@ test("blocks excessively compressible report entries", async () => {
   const bomb = makeZip("high-ratio-result.json", "x".repeat(100_000));
   await assert.rejects(unzipReportFiles(bomb), /high-ratio/);
 });
+
+test("rejects hostile absolute, control-character and traversal ZIP filenames", async () => {
+  for (const name of [
+    "/secret-result.json",
+    "C:\\secret-result.json",
+    "nested/../escape-result.json",
+    "nested/./invalid-result.json",
+    "nested//invalid-result.json",
+    "nested\\..\\escape-result.json",
+    "report\0result.json",
+  ]) {
+    await assert.rejects(unzipReportFiles(makeZip(name, "{}", false)), /unsafe archive path/);
+  }
+});
+
+test("rejects encrypted and ZIP64 entries without attempting decompression", async () => {
+  const encrypted = new Uint8Array(await makeZip("safe-result.json", "{}", false).arrayBuffer());
+  const encryptedView = new DataView(encrypted.buffer);
+  const encryptedDirectory = encryptedView.getUint32(encrypted.byteLength - 6, true);
+  encryptedView.setUint16(6, 1, true);
+  encryptedView.setUint16(encryptedDirectory + 8, 1, true);
+  await assert.rejects(unzipReportFiles(new File([encrypted], "encrypted.zip")), /encrypted/);
+
+  const zip64 = new Uint8Array(await makeZip("safe-result.json", "{}", false).arrayBuffer());
+  const zip64View = new DataView(zip64.buffer);
+  const zip64Directory = zip64View.getUint32(zip64.byteLength - 6, true);
+  zip64View.setUint32(zip64Directory + 24, 0xffffffff, true);
+  await assert.rejects(unzipReportFiles(new File([zip64], "zip64.zip")), /ZIP64/);
+});
+
+test("rejects claimed excessive archive entry counts before reading entries", async () => {
+  const oversized = new Uint8Array(await makeZip("safe-result.json", "{}", false).arrayBuffer());
+  const view = new DataView(oversized.buffer);
+  const end = oversized.byteLength - 22;
+  view.setUint16(end + 8, 2_001, true);
+  view.setUint16(end + 10, 2_001, true);
+  await assert.rejects(unzipReportFiles(new File([oversized], "too-many.zip")), /file count/);
+});
