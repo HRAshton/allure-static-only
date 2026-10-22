@@ -32,11 +32,14 @@ checksum and attribution artifacts can be served unchanged.
 
 Checksums prove self-consistency of a distribution after it has been prepared;
 they are **not a cryptographic signature** or supply-chain attestation.
-The version in `package.json` is still `0.0.0`, and the SDK package remains
-private. Reproducing an identical bundle in a *separate clean build* and
-recording asset provenance for the complete upstream dependency tree still
-needs evidence.
+The project and SDK candidates are both versioned `0.1.0-rc.1` and remain
+private. The consolidated gate compares two clean host assembles consuming
+one verified pinned upstream asset snapshot; independently rebuilding that
+upstream source has **already produced different hashed chunk filenames**.
+See `docs/INDEPENDENT-BUILD-VERIFICATION.md` before claiming reproducibility.
 
-The NOTICE is provisional. No project-wide LICENSE has been approved, and
-the dependencies actually bundled by the upstream frontend require review
-before publication. Do not issue a release tag based on this milestone alone.
+The NOTICE is provisional. Generated `third-party-license-files.json`
+indexes and hashes the bundler-emitted `*.LICENSE.txt` companion files;
+it is not a comprehensive license inventory or a grant of rights.
+No project-wide LICENSE has been approved, and the dependencies actually
+bundled by the upstream frontend require review before publication. Do not issue a release tag based on this milestone alone.
