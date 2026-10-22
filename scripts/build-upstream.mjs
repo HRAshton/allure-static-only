@@ -3,6 +3,8 @@ import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { CONTENT_SECURITY_POLICY } from "./static-security.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const lock = JSON.parse(await readFile(path.join(root, "upstream.lock.json"), "utf8"));
 const workspace = path.join(root, ".allure-workspace", "upstream");
@@ -52,7 +54,7 @@ run("corepack", ["yarn", "build"], workspace);
 
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-for (const moduleName of ["browser-import.mjs", "import-generated.mjs"]) {
+for (const moduleName of ["bootstrap.mjs", "browser-import.mjs", "import-generated.mjs"]) {
   await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
 }
 run("npm", ["run", "build:browser"]);
@@ -78,30 +80,13 @@ const html = `<!doctype html>
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta http-equiv="Content-Security-Policy" content="${CONTENT_SECURITY_POLICY}" />
+    <meta name="referrer" content="no-referrer" />
     <base href="./" />
     <title>Allure Static Only</title>
     <link rel="icon" href="data:," />
     ${cssTag}
-    <script>
-      window.allureReportData = {};
-      window.allureReportDataReady = false;
-      window.allureReportOptions = {
-        id: "awesome",
-        reportName: "Allure Static Only",
-        logo: "",
-        reportLanguage: "en",
-        theme: "auto",
-        createdAt: Date.now(),
-        reportUuid: "00000000-0000-4000-8000-000000000001",
-        allureVersion: "3.21.0",
-        cacheKey: "m1",
-        layout: "split",
-        defaultSection: "",
-        groupBy: ["parentSuite", "suite", "subSuite"],
-        sections: ["charts", "timeline", "metrics"],
-      };
-      window.allure = window.allure || {};
-    </script>
+    <script src="./bootstrap.mjs"></script>
     <script type="module" src="./import-generated.mjs"></script>
     <script defer src="./${appScript}"></script>
   </head>

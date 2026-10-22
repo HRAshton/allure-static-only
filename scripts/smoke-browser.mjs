@@ -5,6 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { staticContentType } from "./static-content-types.mjs";
+import { CONTENT_SECURITY_POLICY, STATIC_SECURITY_HEADERS } from "./static-security.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
@@ -30,6 +31,7 @@ const server = createServer(async (req, res) => {
     res.writeHead(200, {
       "content-type": staticContentType(target),
       "cache-control": "no-store",
+      ...STATIC_SECURITY_HEADERS,
     });
     res.end(await readFile(target));
   } catch {
@@ -66,6 +68,24 @@ try {
     }
   });
   await page.goto(`http://127.0.0.1:${port}/`);
+  const security = await page.evaluate(() => ({
+    csp: document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content,
+    bootstrap: [...document.scripts].some((script) =>
+      script.getAttribute("src") === "./bootstrap.mjs",
+    ),
+    inlineScripts: [...document.scripts].filter((script) => !script.src).length,
+  }));
+  if (
+    security.csp !== CONTENT_SECURITY_POLICY ||
+    !security.bootstrap ||
+    security.inlineScripts !== 0
+  ) {
+    throw new Error(`Expected external-only JavaScript under CSP: ${JSON.stringify(security)}`);
+  }
+  const response = await page.request.get(`http://127.0.0.1:${port}/`);
+  if (response.headers()["content-security-policy"] !== CONTENT_SECURITY_POLICY) {
+    throw new Error("Static host must enforce matching HTTP Content-Security-Policy.");
+  }
   const createdAt = await page.evaluate(() => window.allureReportOptions.createdAt);
   if (!Number.isFinite(createdAt) || Number.isNaN(new Date(createdAt).getTime())) {
     throw new Error("Static Allure bootstrap has no valid createdAt timestamp.");
