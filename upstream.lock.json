@@ -1,0 +1,9 @@
+{
+  "repository": "https://github.com/allure-framework/allure3.git",
+  "commit": "b26b092cc16c69a5fb74ea0d68e565d35a470ef4",
+  "frontendWorkspace": "@allurereport/web-awesome",
+  "frontendAssets": "packages/web-awesome/dist/multi",
+  "dataLoader": "packages/web-commons/src/data.ts",
+  "upstreamPackageManager": "yarn@4.18.1",
+  "license": "Apache-2.0"
+}

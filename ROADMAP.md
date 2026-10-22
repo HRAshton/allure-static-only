@@ -10,7 +10,7 @@ The upstream Allure interface and its data contracts are private implementation 
 
 ## Architecture decisions (mandatory)
 
-1. **Upstream as input, not a fork.** Pin a full upstream git commit hash; fetch to an ignored build workspace; apply a small, reviewed patch at a documented UI/data boundary; build into the static artifact. The build MUST fail on patch drift, never silently edit minified bundles.
+1. **Upstream as input, not a fork.** Pin a full upstream git commit hash; fetch to an ignored build workspace; prefer the existing in-browser data contract without a source patch; only apply a small reviewed patch if needed. Build into the static artifact. The build MUST fail on upstream contract drift, never silently edit minified bundles.
 2. **Runtime = browser only.** No backend calls for uploads, parsing, conversion, analytics or synchronization. All file reads use browser APIs; long conversions belong in Workers. Bundle local assets and configure a restrictive CSP when feasible.
 3. **Explicit ports and adapters.** `domain/` owns immutable normalized models; `converters/` owns format-specific parsers; `runtime/` owns detection, routing, cancellation, limits and file IO; `allure-adapter/` owns translation to upstream's current UI contract; `shell/` owns the import interface. Converters MUST NOT import Allure UI modules, and domain MUST NOT depend on browser APIs or parsing libraries.
 4. **Versioned converter API.** Each converter declares `id`, `apiVersion`, accepted MIME/extensions, `detect`, and `convert`; collisions are deterministically resolved and ambiguous formats reported. Result validation must reject malformed data. “Attachable” initially means build-time modules; runtime third-party plugin execution is a separate security-gated milestone.
@@ -30,7 +30,7 @@ Every milestone is one focused branch and one PR into `main`, then **squash merg
 
 ### M1: Upstream feasibility gate (risk blocker)
 - Pin a tested Allure 3 commit; document exact package path, license and build prerequisites.
-- Build the unmodified upstream Awesome frontend, identify its data-loading seam and create a minimal reproducible adapter patch with no minified modifications.
+- Build the unmodified upstream Awesome frontend, identify its data-loading seam and prove a minimal reproducible data-loader integration, preferably without any source patch.
 - Replace one fixture's static data read with an in-memory/browser-supplied data source; test a real Allure UI rendering under static hosting.
 - **Exit:** upstream UI displays a test fixture in-browser, without runtime Node, API or report-generation CLI. Failure => document blocker and stop expansion; do not substitute a custom UI.
 

@@ -11,7 +11,9 @@
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "node --experimental-strip-types --test",
-    "verify": "npm run check && npm run typecheck && npm test"
+    "verify": "npm run check && npm run typecheck && npm test",
+    "upstream:probe": "node scripts/build-upstream.mjs --probe",
+    "build:upstream": "node scripts/build-upstream.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
