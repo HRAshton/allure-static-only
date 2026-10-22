@@ -25,6 +25,8 @@ const elapsed = Math.round(performance.now() - start);
 const heap = Math.max(0, process.memoryUsage().heapUsed - baseline);
 assert.equal(result.documents["widgets/statistic.json"].total, 1800);
 assert.ok(bytes > 100000);
-console.log(JSON.stringify({ cases: 1800, elapsedMs: elapsed, deltaHeapMiB: heap / 1048576, bytes }));
+console.log(
+  JSON.stringify({ cases: 1800, elapsedMs: elapsed, deltaHeapMiB: heap / 1048576, bytes }),
+);
 assert.ok(elapsed < 15000, "Adapter exceeded 15s benchmark ceiling");
 assert.ok(heap < 192 * 1048576, "Adapter exceeded 192MiB incremental heap ceiling");
