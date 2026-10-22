@@ -83,6 +83,66 @@ export async function readGeneratedAllure(files, options = {}) {
   return result;
 }
 
+async function loadRawModules() {
+  const [converter, importer, adapter] = await Promise.all([
+    import("./app/converters/allure-results.js"),
+    import("./app/runtime/import-browser-report.js"),
+    import("./app/allure-adapter/awesome-data.js"),
+  ]);
+  return {
+    allureResultsConverter: converter.allureResultsConverter,
+    importBrowserReport: importer.importBrowserReport,
+    awesomeReportData: adapter.awesomeReportData,
+    unzipReportFiles: (await import("./app/runtime/unzip-report.js")).unzipReportFiles,
+  };
+}
+
+/** Converts raw JSON test results entirely in the browser. */
+export async function readRawAllure(files, options = {}, loadModules = loadRawModules) {
+  const { signal, onProgress } = options;
+  assertNotCancelled(signal);
+  const { allureResultsConverter, importBrowserReport, awesomeReportData, unzipReportFiles } =
+    await loadModules();
+  const sourceFiles =
+    files.length === 1 && /\.zip$/i.test(files[0].name)
+      ? await unzipReportFiles(files[0], signal)
+      : files;
+  const report = await importBrowserReport(sourceFiles, [allureResultsConverter], { signal });
+  assertNotCancelled(signal);
+  const { documents, binaries } = awesomeReportData(report);
+  const mapped = Object.create(null);
+  for (const [path, value] of Object.entries(documents)) {
+    const encoded = new TextEncoder().encode(JSON.stringify(value));
+    mapped[path] = bytesToBase64(encoded);
+  }
+
+  const seen = new Set();
+  let totalBytes = 0;
+  for (const { targetPath, sourcePath } of binaries) {
+    const matching = sourceFiles.filter((file) => {
+      const fullPath = file.webkitRelativePath || file.name;
+      return fullPath === sourcePath || fullPath.endsWith(`/${sourcePath}`);
+    });
+    if (matching.length !== 1) {
+      throw new Error(`Missing or ambiguous attachment: ${sourcePath}`);
+    }
+    const file = matching[0];
+    if (file.size > 32 * 1024 * 1024) {
+      throw new Error(`Oversize attachment: ${sourcePath}`);
+    }
+    totalBytes += file.size;
+    if (totalBytes > 64 * 1024 * 1024 || seen.has(targetPath)) {
+      throw new Error("Attachment limit or duplicate path exceeded.");
+    }
+    seen.add(targetPath);
+    assertNotCancelled(signal);
+    mapped[targetPath] = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+    assertNotCancelled(signal);
+    onProgress?.({ processedBytes: totalBytes, totalBytes });
+  }
+  return mapped;
+}
+
 function initializeImporter() {
   const directoryInput = document.getElementById("allure-input");
   const filesInput = document.getElementById("allure-files-input");
@@ -119,7 +179,10 @@ function initializeImporter() {
     progressElement.textContent = "Loading report locally";
     setBusy(true);
     try {
-      const data = await readGeneratedAllure(files, {
+      const importer = files.some((file) => /-result\.json$|\.zip$/i.test(file.name))
+        ? readRawAllure
+        : readGeneratedAllure;
+      const data = await importer(files, {
         signal: controller.signal,
         onProgress({ processedBytes, totalBytes }) {
           progressElement.textContent = `Loaded ${processedBytes} / ${totalBytes} bytes locally`;

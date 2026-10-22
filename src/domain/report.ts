@@ -18,6 +18,9 @@ export interface ReportStep {
 export interface TestCase {
   readonly id: string;
   readonly name: string;
+  readonly historyId?: string;
+  readonly startMs?: number;
+  readonly stopMs?: number;
   readonly status: TestStatus;
   readonly durationMs?: number;
   readonly fullName?: string;

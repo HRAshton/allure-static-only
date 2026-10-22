@@ -55,6 +55,7 @@ await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, for
 for (const moduleName of ["browser-import.mjs", "import-generated.mjs"]) {
   await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
 }
+run("npm", ["run", "build:browser"]);
 
 const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
 const appScript = manifest["main.js"];
