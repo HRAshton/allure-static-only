@@ -1,0 +1,50 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "timezone": "Europe/Belgrade",
+  "schedule": [
+    "* 2-5 * * 1"
+  ],
+  "updateNotScheduled": false,
+  "dependencyDashboard": true,
+  "prHourlyLimit": 1,
+  "prConcurrentLimit": 2,
+  "branchConcurrentLimit": 2,
+  "automergeType": "pr",
+  "automergeStrategy": "squash",
+  "platformAutomerge": false,
+  "ignoreTests": false,
+  "pinDigests": true,
+  "packageRules": [
+    {
+      "description": "One weekly, squashed group for patch, minor, pin and digest updates",
+      "matchUpdateTypes": [
+        "minor",
+        "patch",
+        "pin",
+        "digest"
+      ],
+      "groupName": "weekly non-major dependencies",
+      "groupSlug": "weekly-nonmajor",
+      "automerge": true
+    },
+    {
+      "description": "One weekly review-only group for major upgrades",
+      "matchUpdateTypes": [
+        "major"
+      ],
+      "groupName": "weekly major dependencies",
+      "groupSlug": "weekly-major",
+      "automerge": false
+    },
+    {
+      "description": "Give newly published npm packages a short stability window",
+      "matchDatasources": [
+        "npm"
+      ],
+      "minimumReleaseAge": "3 days"
+    }
+  ]
+}

@@ -18,5 +18,6 @@
       "import": "./dist/sdk/index.js"
     }
   },
-  "types": "./dist/sdk/index.d.ts"
+  "types": "./dist/sdk/index.d.ts",
+  "license": "0BSD"
 }
