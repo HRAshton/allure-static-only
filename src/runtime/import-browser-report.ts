@@ -1,5 +1,6 @@
 import type { Cancellation, ReportConverter } from "../converters/contract.ts";
 import type { TestReport } from "../domain/report.ts";
+import { validateTestReport } from "../domain/validate-report.ts";
 import {
   type BrowserInputLimits,
   browserReportInputs,
@@ -29,5 +30,6 @@ export async function importBrowserReport(
   if (signal?.aborted) {
     throw new ImportCancelledError();
   }
+  validateTestReport(report);
   return report;
 }

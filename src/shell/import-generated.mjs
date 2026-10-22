@@ -83,31 +83,32 @@ export async function readGeneratedAllure(files, options = {}) {
   return result;
 }
 
-async function loadRawModules() {
-  const [converter, importer, adapter] = await Promise.all([
-    import("./app/converters/allure-results.js"),
+async function loadConverterModules() {
+  const [registry, importer, adapter, zip] = await Promise.all([
+    import("./app/config/converters.js"),
     import("./app/runtime/import-browser-report.js"),
     import("./app/allure-adapter/awesome-data.js"),
+    import("./app/runtime/unzip-report.js"),
   ]);
   return {
-    allureResultsConverter: converter.allureResultsConverter,
+    converterRegistry: registry.default,
     importBrowserReport: importer.importBrowserReport,
     awesomeReportData: adapter.awesomeReportData,
-    unzipReportFiles: (await import("./app/runtime/unzip-report.js")).unzipReportFiles,
+    unzipReportFiles: zip.unzipReportFiles,
   };
 }
 
-/** Converts raw JSON test results entirely in the browser. */
-export async function readRawAllure(files, options = {}, loadModules = loadRawModules) {
+/** Converts a registered format to upstream Awesome data without server-side processing. */
+export async function readConvertedReport(files, options = {}, loadModules = loadConverterModules) {
   const { signal, onProgress } = options;
   assertNotCancelled(signal);
-  const { allureResultsConverter, importBrowserReport, awesomeReportData, unzipReportFiles } =
+  const { converterRegistry, importBrowserReport, awesomeReportData, unzipReportFiles } =
     await loadModules();
   const sourceFiles =
     files.length === 1 && /\.zip$/i.test(files[0].name)
       ? await unzipReportFiles(files[0], signal)
       : files;
-  const report = await importBrowserReport(sourceFiles, [allureResultsConverter], { signal });
+  const report = await importBrowserReport(sourceFiles, converterRegistry.converters, { signal });
   assertNotCancelled(signal);
   const { documents, binaries } = awesomeReportData(report);
   const mapped = Object.create(null);
@@ -179,9 +180,12 @@ function initializeImporter() {
     progressElement.textContent = "Loading report locally";
     setBusy(true);
     try {
-      const importer = files.some((file) => /-result\.json$|\.zip$/i.test(file.name))
-        ? readRawAllure
-        : readGeneratedAllure;
+      const isGenerated = files.some(
+        (file) =>
+          normalizedGeneratedPath(file.webkitRelativePath || file.name) ===
+          "widgets/statistic.json",
+      );
+      const importer = isGenerated ? readGeneratedAllure : readConvertedReport;
       const data = await importer(files, {
         signal: controller.signal,
         onProgress({ processedBytes, totalBytes }) {

@@ -98,11 +98,11 @@ const html = `<!doctype html>
   </head>
   <body>
     <main id="allure-importer">
-      <h1>Open a generated Allure Awesome report</h1>
-      <p>M1 proof: select a generated report directory containing widgets/ and data/.
-         Raw allure-results import will come in M3.</p>
+      <h1>Open a test report</h1>
+      <p>Import raw results using a registered format converter, or select a
+         generated Allure Awesome report directory. Files stay in this browser.</p>
       <div id="allure-drop-target" role="region" aria-label="Drop report files">
-        <p>Drop generated report files here or select a directory.</p>
+        <p>Drop report files here or select a directory.</p>
       </div>
       <label for="allure-input">Report directory</label>
       <input id="allure-input" type="file" webkitdirectory multiple />

@@ -79,7 +79,7 @@ try {
     dataTransfer: invalidDrop,
   });
   await page.waitForFunction(() =>
-    document.getElementById("allure-import-error")?.textContent.includes("statistic.json"),
+    document.getElementById("allure-import-error")?.textContent.includes("No converter recognizes"),
   );
   await page.locator("#allure-input").setInputFiles(fixture);
   try {

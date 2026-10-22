@@ -10,6 +10,9 @@ const dependencies = {
   runtime: new Set(["runtime", "converters", "domain"]),
   "allure-adapter": new Set(["allure-adapter", "runtime", "converters", "domain"]),
   shell: new Set(["shell", "allure-adapter", "runtime", "converters", "domain"]),
+  sdk: new Set(["sdk", "converters", "domain"]),
+  config: new Set(["config", "sdk", "converters", "extensions", "domain"]),
+  extensions: new Set(["extensions", "sdk", "domain"]),
 };
 
 async function collect(directory) {
