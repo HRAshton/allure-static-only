@@ -89,7 +89,9 @@ try {
   }
   const importError = await page.locator("#allure-import-error").textContent();
   if (importError?.trim()) {
-    throw new Error(`Browser import failed: ${importError.trim()}; console: ${consoleErrors.join("; ")}`);
+    throw new Error(
+      `Browser import failed: ${importError.trim()}; console: ${consoleErrors.join("; ")}`,
+    );
   }
   await page.locator("#allure-importer").waitFor({ state: "hidden", timeout: 2_000 });
   await page.getByText("M1 browser fixture passing test", { exact: false }).first().waitFor({
