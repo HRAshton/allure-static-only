@@ -4,7 +4,7 @@ import type {
   ReportInput,
   TestCase,
   TestReport,
-} from "../../src/sdk/index.ts";
+} from "@allure-static-only/converter-sdk";
 
 const FORMAT = "acme.test-report.v1";
 const MAX_JSON_BYTES = 1024 * 1024;
