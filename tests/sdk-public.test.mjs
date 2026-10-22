@@ -1,23 +1,25 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { defineConverters, CONVERTER_API_VERSION } from "../src/sdk/index.ts";
+import defaultRegistry from "../src/extensions/converters.ts";
 import { chooseConverter, AmbiguousReportError } from "../src/runtime/choose-converter.ts";
 import { importBrowserReport } from "../src/runtime/import-browser-report.ts";
-import defaultRegistry from "../src/extensions/converters.ts";
+import { CONVERTER_API_VERSION, defineConverters } from "../src/sdk/index.ts";
 
 const sampleReport = (name) => ({
   id: "external",
   name,
   sourceFormat: "company-json",
-  tests: [{
-    id: "case",
-    name,
-    status: "passed",
-    labels: {},
-    steps: [],
-    attachments: [],
-  }],
+  tests: [
+    {
+      id: "case",
+      name,
+      status: "passed",
+      labels: {},
+      steps: [],
+      attachments: [],
+    },
+  ],
 });
 const converter = (id, confidence = 90) => ({
   id,
@@ -51,10 +53,7 @@ test("public registration validates API version, IDs, extensions and methods", (
     () => defineConverters({ converters: [{ ...converter("company"), apiVersion: 2 }] }),
     /unsupported API version/,
   );
-  assert.throws(
-    () => defineConverters({ converters: [{ ...converter("Company") }] }),
-    /lowercase/,
-  );
+  assert.throws(() => defineConverters({ converters: [{ ...converter("Company") }] }), /lowercase/);
   assert.throws(
     () => defineConverters({ converters: [{ ...converter("company"), extensions: ["json"] }] }),
     /lowercase file extensions/,
