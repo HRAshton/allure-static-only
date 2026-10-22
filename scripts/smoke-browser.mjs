@@ -13,7 +13,11 @@ const fixture = path.join(root, ".allure-workspace", "m1-fixture-report");
 const requireUpstream = createRequire(
   path.join(root, ".allure-workspace", "upstream", "package.json"),
 );
-const { chromium } = requireUpstream("@playwright/test");
+const { chromium, firefox } = requireUpstream("@playwright/test");
+const browserEngine = process.env.BROWSER_ENGINE ?? "chromium";
+if (browserEngine !== "chromium" && browserEngine !== "firefox") {
+  throw new Error(`Unsupported browser engine: ${browserEngine}`);
+}
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -43,11 +47,14 @@ await new Promise((resolve) => server.listen(0, "127.0.0.1", resolve));
 const port = server.address().port;
 let browser;
 try {
-  browser = await chromium.launch({
-    headless: true,
-    executablePath: process.env.CHROME_BIN ?? "/usr/bin/google-chrome",
-    args: ["--no-sandbox"],
-  });
+  browser =
+    browserEngine === "firefox"
+      ? await firefox.launch({ headless: true })
+      : await chromium.launch({
+          headless: true,
+          executablePath: process.env.CHROME_BIN ?? "/usr/bin/google-chrome",
+          args: ["--no-sandbox"],
+        });
   const page = await browser.newPage();
   const errors = [];
   const outgoing = [];
@@ -483,6 +490,63 @@ try {
     );
   }
   console.log("M4b browser smoke passed: CTRF status, retries, steps and no uploads.");
+
+  // Exercise an HTML-looking test name in the real upstream UI, not only the converter model.
+  const adversarialPage = await browser.newPage();
+  const adversarialErrors = [];
+  const adversarialOutgoing = [];
+  adversarialPage.on("pageerror", (error) => adversarialErrors.push(error.message));
+  adversarialPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      adversarialOutgoing.push(request.url());
+    }
+  });
+  await adversarialPage.goto(`http://127.0.0.1:${port}/`);
+  const htmlLookingName = '<img src=x onerror="window.__reportXss=1">';
+  const adversarialXml = [
+    '<testsuite name="Adversarial">',
+    '<testcase name="&lt;img src=x onerror=&quot;window.__reportXss=1&quot;&gt;"/>',
+    "</testsuite>",
+  ].join("");
+  await adversarialPage.locator("#allure-files-input").setInputFiles({
+    name: "adversarial.xml",
+    mimeType: "application/xml",
+    buffer: Buffer.from(adversarialXml),
+  });
+  await adversarialPage.locator("#allure-importer").waitFor({
+    state: "hidden",
+    timeout: 15_000,
+  });
+  const suite = adversarialPage.getByText("Adversarial", { exact: true }).first();
+  await suite.waitFor({ state: "visible", timeout: 15_000 });
+  await suite.click();
+  await adversarialPage.getByText(htmlLookingName, { exact: true }).first().waitFor({
+    state: "visible",
+    timeout: 15_000,
+  });
+  const injectionState = await adversarialPage.evaluate(() => ({
+    executed: window.__reportXss === 1,
+    htmlNode: Boolean(document.querySelector('img[onerror*="__reportXss"]')),
+    reportName: Object.keys(window.allureReportData)
+      .filter((key) => key.startsWith("data/test-results/"))
+      .map((key) => JSON.parse(atob(window.allureReportData[key])).name)[0],
+  }));
+  if (
+    injectionState.executed ||
+    injectionState.htmlNode ||
+    injectionState.reportName !== htmlLookingName ||
+    adversarialErrors.length ||
+    adversarialOutgoing.length
+  ) {
+    throw new Error(
+      `Unsafe HTML-looking report: ${JSON.stringify(injectionState)}; errors: ${adversarialErrors.join("; ")}; external: ${adversarialOutgoing.join("; ")}`,
+    );
+  }
+  console.log(`${browserEngine} CSP and HTML-looking test-name regression passed.`);
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));

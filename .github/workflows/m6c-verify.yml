@@ -1,0 +1,46 @@
+name: M6c Firefox and Chromium security acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m6c-cross-browser
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6c-cross-browser
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Strict project gates
+        run: |
+          npm ci
+          npm run verify
+      - name: Build pinned upstream and create representative fixtures
+        run: |
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+      - name: Chromium original Allure UI and malicious-name smoke
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs
+      - name: Install matching Playwright Firefox
+        run: |
+          cd .allure-workspace/upstream
+          corepack yarn playwright install --with-deps firefox
+      - name: Firefox original Allure UI and malicious-name smoke
+        env:
+          BROWSER_ENGINE: firefox
+        run: node scripts/smoke-browser.mjs
