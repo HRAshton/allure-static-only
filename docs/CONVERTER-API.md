@@ -65,15 +65,16 @@ interface ReportConverter {
   components may contain lowercase letters, digits, `-`, `.`, or `_`.
 - `apiVersion`: exactly `1`. Incompatible converter versions fail at
   registration; avoid duplicating the literal version in multiple sources.
-- `extensions`: nonempty lower-case extensions such as `[".json"]`,
-  `[".xml"]`; a declarative hint, **not** proof of format.
+- `extensions`: nonempty lowercase filename suffixes such as `[".json"]`,
+  `[".xml"]`, or the built-in Allure suffix `["-result.json"]`. These are
+  declarative hints, **not** proof of format.
 - `detect()`: returns a **Promise** of integer confidence `0..100`.
   `0` means unsupported. Inspect file names and bytes as needed; avoid
   expensive full parsing during detection.
 - `convert()`: returns a **Promise** of an immutable `TestReport`. Reject
   malformed or truncated input with useful error messages. Check cancellation
   during lengthy parsing and before additional reads.
-- The registry refuses duplicate IDs, invalid extensions, missing functions
+- The registry refuses duplicate IDs, invalid suffixes, missing functions
   and unsupported versions. Highest nonzero confidence wins. Equal top scores
   throw `AmbiguousReportError`; zero matches throw `UnsupportedReportError`.
   Extension overlap is allowed if detection unambiguously distinguishes formats.

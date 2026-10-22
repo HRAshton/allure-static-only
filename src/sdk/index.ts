@@ -66,10 +66,11 @@ export function defineConverters(config: ConverterConfiguration): Readonly<Conve
       !Array.isArray(converter.extensions) ||
       converter.extensions.length === 0 ||
       converter.extensions.some(
-        (ext: unknown) => typeof ext !== "string" || !/^\.[a-z0-9]+$/.test(ext),
+        (ext: unknown) =>
+          typeof ext !== "string" || !/^(?:\.[a-z0-9]+|-[a-z0-9-]+(?:\.[a-z0-9]+)+)$/.test(ext),
       )
     ) {
-      throw new Error(`Converter ${converter.id} must declare lowercase file extensions.`);
+      throw new Error(`Converter ${converter.id} must declare lowercase filename suffixes.`);
     }
     if (typeof converter.detect !== "function" || typeof converter.convert !== "function") {
       throw new Error(`Converter ${converter.id} is missing detect() or convert().`);

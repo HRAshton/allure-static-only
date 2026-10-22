@@ -56,7 +56,7 @@ test("public registration validates API version, IDs, extensions and methods", (
   assert.throws(() => defineConverters({ converters: [{ ...converter("Company") }] }), /lowercase/);
   assert.throws(
     () => defineConverters({ converters: [{ ...converter("company"), extensions: ["json"] }] }),
-    /lowercase file extensions/,
+    /lowercase filename suffixes/,
   );
 });
 
