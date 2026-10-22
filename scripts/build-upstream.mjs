@@ -9,7 +9,15 @@ const workspace = path.join(root, ".allure-workspace", "upstream");
 const dist = path.join(root, "dist");
 
 const run = (bin, args, cwd = root) =>
-  execFileSync(bin, args, { cwd, stdio: "inherit", maxBuffer: 10 * 1024 * 1024 });
+  execFileSync(bin, args, {
+    cwd,
+    stdio: "inherit",
+    maxBuffer: 10 * 1024 * 1024,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, "--experimental-strip-types"].filter(Boolean).join(" "),
+    },
+  });
 
 await mkdir(path.dirname(workspace), { recursive: true });
 try {

@@ -43,6 +43,10 @@ execFileSync(
     cwd: path.join(upstream, "packages", "web-awesome"),
     stdio: "inherit",
     maxBuffer: 10 * 1024 * 1024,
+    env: {
+      ...process.env,
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, "--experimental-strip-types"].filter(Boolean).join(" "),
+    },
   },
 );
 await readFile(path.join(output, "widgets", "statistic.json"), "utf8");
