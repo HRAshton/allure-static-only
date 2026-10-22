@@ -71,6 +71,7 @@ const html = `<!doctype html>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <base href="./" />
     <title>Allure Static Only</title>
+    <link rel="icon" href="data:," />
     ${cssTag}
     <script>
       window.allureReportData = {};

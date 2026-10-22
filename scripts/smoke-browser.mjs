@@ -98,6 +98,8 @@ try {
     );
   }
   await page.locator("#allure-importer").waitFor({ state: "hidden", timeout: 2_000 });
+  // The upstream tree initially renders the suite in a collapsed state.
+  await page.getByText("Static Import", { exact: true }).first().click();
   try {
     await page.getByText("M1 browser fixture passing test", { exact: false }).first().waitFor({
       state: "visible",

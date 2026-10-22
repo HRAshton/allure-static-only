@@ -54,3 +54,5 @@ Only M1 branch pushes (and deliberate manual dispatches) run the one-job, 20-min
 ## Browser integration finding
 
 A browser smoke test confirmed that the importer places the generated Awesome data into the upstream globals. The upstream UI must also receive a populated `allureReportOptions` object compatible with the options produced by the official Awesome report generator. In particular, a missing `createdAt` caused an `Invalid time value` runtime exception and an empty root DOM. M1's static bootstrap now provides a valid timestamp and stable version/identity fields. This does not close M1 until the end-to-end browser smoke test passes.
+
+The bootstrap metadata fix unblocked the actual Allure UI: Chromium rendered one passing test in the report counter and displayed the imported `Static Import` suite. A subsequent smoke assertion failed because it expected the nested test to be visible before the suite was expanded. The test now expands the suite first. An inline favicon avoids a browser-only `/favicon.ico` 404. Await the final browser verification before merging.
