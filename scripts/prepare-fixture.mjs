@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdir, writeFile, readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -26,13 +26,24 @@ await writeFile(
   }),
   "utf8",
 );
-execFileSync("corepack", [
-  "yarn", "run", "-T", "allure", "generate", results,
-  "--config=./allurerc-dev.mjs", "--output", output,
-], {
-  cwd: path.join(upstream, "packages", "web-awesome"),
-  stdio: "inherit",
-  maxBuffer: 10 * 1024 * 1024,
-});
+execFileSync(
+  "corepack",
+  [
+    "yarn",
+    "run",
+    "-T",
+    "allure",
+    "generate",
+    results,
+    "--config=./allurerc-dev.mjs",
+    "--output",
+    output,
+  ],
+  {
+    cwd: path.join(upstream, "packages", "web-awesome"),
+    stdio: "inherit",
+    maxBuffer: 10 * 1024 * 1024,
+  },
+);
 await readFile(path.join(output, "widgets", "statistic.json"), "utf8");
 console.log(`Created Allure ${lock.commit} M1 report fixture: ${output}`);

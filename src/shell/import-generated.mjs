@@ -3,7 +3,10 @@ const MAX_BYTES = 64 * 1024 * 1024;
 
 /** Isolate only generated Allure data paths, never accept traversal or absolute paths. */
 export function normalizedGeneratedPath(filePath) {
-  if (/^(?:[\\/]|[a-zA-Z]:[\\/])/.test(filePath) || /[\u0000-\u001f]/.test(filePath)) {
+  if (
+    /^(?:[\\/]|[a-zA-Z]:[\\/])/.test(filePath) ||
+    [...filePath].some((char) => char.charCodeAt(0) < 32)
+  ) {
     return undefined;
   }
 

@@ -45,8 +45,7 @@ export async function chooseConverter(
     .filter((item) => item.confidence > 0)
     .sort(
       (left, right) =>
-        right.confidence - left.confidence ||
-        left.converter.id.localeCompare(right.converter.id),
+        right.confidence - left.confidence || left.converter.id.localeCompare(right.converter.id),
     );
   const first = matches[0];
 

@@ -17,8 +17,14 @@ const fakeFile = (path, contents) => {
 };
 
 test("extracts only generated Allure paths", () => {
-  assert.equal(normalizedGeneratedPath("report/awesome/widgets/statistic.json"), "widgets/statistic.json");
-  assert.equal(normalizedGeneratedPath("awesome/data/test-results/a.json"), "data/test-results/a.json");
+  assert.equal(
+    normalizedGeneratedPath("report/awesome/widgets/statistic.json"),
+    "widgets/statistic.json",
+  );
+  assert.equal(
+    normalizedGeneratedPath("awesome/data/test-results/a.json"),
+    "data/test-results/a.json",
+  );
   assert.equal(normalizedGeneratedPath("../widgets/statistic.json"), undefined);
   assert.equal(normalizedGeneratedPath("/private/widgets/statistic.json"), undefined);
   assert.equal(normalizedGeneratedPath("report/other.json"), undefined);
@@ -33,7 +39,10 @@ test("imports generated data locally", async () => {
     fakeFile("awesome/widgets/statistic.json", '{"total":1}'),
     fakeFile("awesome/data/test-results/a.json", '{"id":"a"}'),
   ]);
-  assert.deepEqual(Object.keys(report).sort(), ["data/test-results/a.json", "widgets/statistic.json"]);
+  assert.deepEqual(Object.keys(report).sort(), [
+    "data/test-results/a.json",
+    "widgets/statistic.json",
+  ]);
   assert.equal(atob(report["widgets/statistic.json"]), '{"total":1}');
 });
 

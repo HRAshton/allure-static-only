@@ -42,7 +42,10 @@ run("corepack", ["yarn", "build"], workspace);
 
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-await cp(path.join(root, "src", "shell", "import-generated.mjs"), path.join(dist, "import-generated.mjs"));
+await cp(
+  path.join(root, "src", "shell", "import-generated.mjs"),
+  path.join(dist, "import-generated.mjs"),
+);
 
 const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
 const appScript = manifest["main.js"];

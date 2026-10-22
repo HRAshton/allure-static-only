@@ -1,13 +1,15 @@
-import { createRequire } from "node:module";
-import { createServer } from "node:http";
 import { readFile, stat } from "node:fs/promises";
+import { createServer } from "node:http";
+import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const fixture = path.join(root, ".allure-workspace", "m1-fixture-report");
-const requireUpstream = createRequire(path.join(root, ".allure-workspace", "upstream", "package.json"));
+const requireUpstream = createRequire(
+  path.join(root, ".allure-workspace", "upstream", "package.json"),
+);
 const { chromium } = requireUpstream("@playwright/test");
 
 const mime = {
@@ -22,7 +24,7 @@ const mime = {
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
   const pathname = url.pathname === "/" ? "/index.html" : url.pathname;
-  const target = path.resolve(dist, "." + pathname);
+  const target = path.resolve(dist, `.${pathname}`);
   if (target !== dist && !target.startsWith(dist + path.sep)) {
     res.writeHead(403).end();
     return;
@@ -56,9 +58,11 @@ try {
   const outgoing = [];
   page.on("pageerror", (error) => errors.push(error.message));
   page.on("request", (request) => {
-    if (!request.url().startsWith(`http://127.0.0.1:${port}/`) &&
-        !request.url().startsWith("data:") &&
-        !request.url().startsWith("blob:")) {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
       outgoing.push(request.url());
     }
   });
@@ -70,7 +74,9 @@ try {
     timeout: 60_000,
   });
   if (errors.length || outgoing.length) {
-    throw new Error(`Browser errors: ${errors.join("; ")}; external requests: ${outgoing.join("; ")}`);
+    throw new Error(
+      `Browser errors: ${errors.join("; ")}; external requests: ${outgoing.join("; ")}`,
+    );
   }
   console.log("M1 browser smoke passed: real Allure UI rendered a locally imported fixture.");
 } finally {
