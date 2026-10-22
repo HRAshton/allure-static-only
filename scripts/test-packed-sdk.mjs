@@ -50,7 +50,7 @@ try {
   await mkdir(consumer);
   await writeFile(
     path.join(consumer, "package.json"),
-    JSON.stringify({ name: "sdk-consumer-fixture", private: true, type: "module" }) + "\n",
+    `${JSON.stringify({ name: "sdk-consumer-fixture", private: true, type: "module" })}\n`,
   );
   run(
     "npm",

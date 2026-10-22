@@ -8,7 +8,10 @@
   "engines": {
     "node": ">=22.16.0"
   },
-  "files": ["dist", "README.md"],
+  "files": [
+    "dist",
+    "README.md"
+  ],
   "exports": {
     ".": {
       "types": "./dist/sdk/index.d.ts",
