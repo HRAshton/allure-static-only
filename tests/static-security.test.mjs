@@ -18,7 +18,9 @@ test("static security policy blocks executable report content and remote data ac
   assert.equal(STATIC_SECURITY_HEADERS["x-content-type-options"], "nosniff");
 
   const nginx = await readFile(new URL("../deployment/nginx.conf", import.meta.url), "utf8");
-  assert.ok(nginx.includes(`add_header Content-Security-Policy "${CONTENT_SECURITY_POLICY}" always;`));
+  assert.ok(
+    nginx.includes(`add_header Content-Security-Policy "${CONTENT_SECURITY_POLICY}" always;`),
+  );
   assert.ok(nginx.includes('add_header X-Frame-Options "DENY" always;'));
   assert.ok(nginx.includes('add_header Referrer-Policy "no-referrer" always;'));
 });

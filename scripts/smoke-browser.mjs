@@ -70,8 +70,8 @@ try {
   await page.goto(`http://127.0.0.1:${port}/`);
   const security = await page.evaluate(() => ({
     csp: document.querySelector('meta[http-equiv="Content-Security-Policy"]')?.content,
-    bootstrap: [...document.scripts].some((script) =>
-      script.getAttribute("src") === "./bootstrap.mjs",
+    bootstrap: [...document.scripts].some(
+      (script) => script.getAttribute("src") === "./bootstrap.mjs",
     ),
     inlineScripts: [...document.scripts].filter((script) => !script.src).length,
   }));
