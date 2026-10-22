@@ -1,0 +1,11 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "declaration": true,
+    "rewriteRelativeImportExtensions": true,
+    "outDir": "packages/converter-sdk/dist",
+    "rootDir": "src"
+  },
+  "include": ["src/sdk/index.ts"]
+}

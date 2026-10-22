@@ -1,0 +1,22 @@
+{
+  "name": "@allure-static-only/converter-sdk",
+  "version": "0.1.0-rc.1",
+  "description": "Build-time converter API v1 for browser-local Allure Static Only imports",
+  "private": true,
+  "type": "module",
+  "sideEffects": false,
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/sdk/index.d.ts",
+      "import": "./dist/sdk/index.js"
+    }
+  },
+  "types": "./dist/sdk/index.d.ts"
+}
