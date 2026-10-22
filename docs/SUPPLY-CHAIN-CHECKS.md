@@ -16,7 +16,10 @@ not the externally generated upstream/Yarn artifact tree. To enable the
 `https://github.com/HRAshton/allure-static-only` at
 https://api.reuse.software/ and verify the service's email confirmation.
 The hosted service checks only `main`, so the PR lint is the authoritative
-premerge check. After registration the endpoint will be
+premerge check. Until registration is confirmed the README's dynamic REUSE
+badge may be unavailable or show an unknown status; this is not evidence of
+a completed hosted scan. The Renovate badge intentionally says
+**configured**, not **enabled**, until the GitHub App is installed. After registration the endpoint will be
 https://api.reuse.software/info/github.com/HRAshton/allure-static-only
 and the badge can use
 https://api.reuse.software/badge/github.com/HRAshton/allure-static-only .

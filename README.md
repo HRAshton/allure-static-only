@@ -1,6 +1,9 @@
 # allure-static-only
 
+[![License: 0BSD](https://img.shields.io/badge/license-0BSD-blue.svg)](LICENSE)
+[![REUSE compliance](https://api.reuse.software/badge/github.com/HRAshton/allure-static-only)](https://api.reuse.software/info/github.com/HRAshton/allure-static-only)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/HRAshton/allure-static-only/badge)](https://scorecard.dev/viewer/?uri=github.com/HRAshton/allure-static-only)
+[![Renovate configured](https://img.shields.io/badge/Renovate-configured-blue?logo=renovatebot)](.github/renovate.json)
 
 A browser-only host for the **upstream Allure Awesome frontend** with build-approved, client-side report converters. Production deployment consists exclusively of static HTML, CSS, JavaScript and assets served by Nginx (or any static file server). Reports never need to be uploaded to a backend.
 
