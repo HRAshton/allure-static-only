@@ -11,6 +11,7 @@
     "check:fix": "biome check --write .",
     "typecheck": "tsc --noEmit --project tsconfig.json",
     "test": "node --experimental-strip-types --test",
+    "coverage": "node --experimental-strip-types --experimental-test-coverage --test",
     "verify": "npm run check && npm run typecheck && npm test",
     "upstream:probe": "node scripts/build-upstream.mjs --probe",
     "build:upstream": "node scripts/build-upstream.mjs",

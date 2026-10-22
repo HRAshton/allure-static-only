@@ -356,6 +356,67 @@ try {
     );
   }
   console.log("M4 browser smoke passed: six JUnit cases, native UI, no network upload.");
+  const ctrfPage = await browser.newPage();
+  const ctrfErrors = [];
+  const ctrfOutgoing = [];
+  ctrfPage.on("pageerror", (error) => ctrfErrors.push(error.message));
+  ctrfPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      ctrfOutgoing.push(request.url());
+    }
+  });
+  await ctrfPage.goto(`http://127.0.0.1:${port}/`);
+  await ctrfPage.getByText("download a sample CTRF report").waitFor({ state: "visible" });
+  await ctrfPage
+    .locator("#allure-files-input")
+    .setInputFiles(path.join(root, "fixtures", "demo-ctrf.json"));
+  await ctrfPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 15_000 });
+  const ctrfData = await ctrfPage.evaluate(() => {
+    const data = window.allureReportData;
+    const stats = JSON.parse(atob(data["widgets/statistic.json"]));
+    const nav = JSON.parse(atob(data["widgets/nav.json"]));
+    const docs = Object.keys(data)
+      .filter((key) => key.startsWith("data/test-results/"))
+      .map((key) => JSON.parse(atob(data[key])));
+    const retry = docs.find((entry) => entry.name === "CTRF flaky retry" && !entry.isRetry);
+    const pass = docs.find((entry) => entry.name === "CTRF checkout passes");
+    return {
+      stats,
+      navCount: nav.length,
+      retryCount: retry?.retriesCount,
+      retryStatus: retry?.retries?.[0]?.status,
+      duration: pass?.duration,
+      firstStep: pass?.steps?.[0]?.name,
+    };
+  });
+  if (
+    ctrfData.stats.total !== 5 ||
+    ctrfData.stats.passed !== 2 ||
+    ctrfData.stats.failed !== 1 ||
+    ctrfData.stats.skipped !== 1 ||
+    ctrfData.stats.unknown !== 1 ||
+    ctrfData.navCount !== 5 ||
+    ctrfData.retryCount !== 1 ||
+    ctrfData.retryStatus !== "failed" ||
+    ctrfData.duration !== 250 ||
+    ctrfData.firstStep !== "Fill billing details"
+  ) {
+    throw new Error(`CTRF mapping failed: ${JSON.stringify(ctrfData)}`);
+  }
+  await ctrfPage.getByText("Checkout", { exact: true }).first().waitFor({
+    state: "visible",
+    timeout: 12_000,
+  });
+  if (ctrfErrors.length || ctrfOutgoing.length) {
+    throw new Error(
+      `CTRF browser errors: ${ctrfErrors.join("; ")}; external: ${ctrfOutgoing.join("; ")}`,
+    );
+  }
+  console.log("M4b browser smoke passed: CTRF status, retries, steps and no uploads.");
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));

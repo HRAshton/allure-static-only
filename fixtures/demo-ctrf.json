@@ -1,0 +1,86 @@
+{
+  "reportFormat": "CTRF",
+  "specVersion": "0.2.0",
+  "runId": "allure-static-demo",
+  "timestamp": "2026-10-22T17:00:00Z",
+  "results": {
+    "tool": {
+      "name": "CTRF demo runner"
+    },
+    "summary": {
+      "tests": 5,
+      "passed": 2,
+      "failed": 1,
+      "skipped": 1,
+      "pending": 0,
+      "other": 1,
+      "flaky": 1,
+      "start": 1792688400000,
+      "stop": 1792688403000
+    },
+    "tests": [
+      {
+        "testId": "checkout-payment",
+        "name": "CTRF checkout passes",
+        "status": "passed",
+        "duration": 250,
+        "suite": ["Store", "Checkout"],
+        "tags": ["smoke"],
+        "start": 1792688400100,
+        "stop": 1792688400350,
+        "steps": [
+          {
+            "name": "Fill billing details",
+            "status": "passed"
+          },
+          {
+            "name": "Submit order",
+            "status": "passed"
+          }
+        ]
+      },
+      {
+        "testId": "checkout-failure",
+        "name": "CTRF failure details",
+        "status": "failed",
+        "duration": 100,
+        "message": "Card was declined",
+        "suite": ["Store", "Checkout"]
+      },
+      {
+        "testId": "checkout-skip",
+        "name": "CTRF skipped pending dependency",
+        "status": "skipped",
+        "duration": 0,
+        "suite": ["Store", "Checkout"]
+      },
+      {
+        "testId": "checkout-unknown",
+        "name": "CTRF unknown custom result",
+        "status": "other",
+        "duration": 0,
+        "suite": ["Store", "Checkout"]
+      },
+      {
+        "testId": "checkout-retry",
+        "name": "CTRF flaky retry",
+        "status": "passed",
+        "duration": 52,
+        "suite": ["Store", "Checkout"],
+        "start": 1792688400400,
+        "stop": 1792688400452,
+        "retries": 1,
+        "retryAttempts": [
+          {
+            "attempt": 1,
+            "status": "failed",
+            "duration": 30,
+            "start": 1792688400350,
+            "stop": 1792688400380,
+            "message": "Transient failure"
+          }
+        ]
+      }
+    ]
+  }
+}
