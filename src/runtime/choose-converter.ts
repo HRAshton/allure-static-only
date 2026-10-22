@@ -8,9 +8,12 @@ export class UnsupportedReportError extends Error {
 }
 
 export class AmbiguousReportError extends Error {
-  constructor(readonly converterIds: readonly string[]) {
+  readonly converterIds: readonly string[];
+
+  constructor(converterIds: readonly string[]) {
     super(`Multiple converters matched equally: ${converterIds.join(", ")}`);
     this.name = "AmbiguousReportError";
+    this.converterIds = converterIds;
   }
 }
 
@@ -40,7 +43,11 @@ export async function chooseConverter(
 
   const matches = detected
     .filter((item) => item.confidence > 0)
-    .sort((left, right) => right.confidence - left.confidence || left.converter.id.localeCompare(right.converter.id));
+    .sort(
+      (left, right) =>
+        right.confidence - left.confidence ||
+        left.converter.id.localeCompare(right.converter.id),
+    );
   const first = matches[0];
 
   if (!first) {
