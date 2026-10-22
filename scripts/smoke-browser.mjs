@@ -291,6 +291,71 @@ try {
     );
   }
   console.log("M3 browser smoke passed: raw JSON, ZIP, statuses, retries, steps and PNG.");
+
+  // M4: the Pages demo's public sample must render a real JUnit report in the upstream UI.
+  const junitPage = await browser.newPage();
+  const junitErrors = [];
+  const junitOutgoing = [];
+  junitPage.on("pageerror", (error) => junitErrors.push(error.message));
+  junitPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      junitOutgoing.push(request.url());
+    }
+  });
+  await junitPage.goto(`http://127.0.0.1:${port}/`);
+  await junitPage.getByText("Download a sample JUnit report").waitFor({ state: "visible" });
+  await junitPage
+    .locator("#allure-files-input")
+    .setInputFiles(path.join(root, "fixtures", "demo-junit.xml"));
+  await junitPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 15_000 });
+  const junitData = await junitPage.evaluate(() => {
+    const data = window.allureReportData;
+    const stats = JSON.parse(atob(data["widgets/statistic.json"]));
+    const nav = JSON.parse(atob(data["widgets/nav.json"]));
+    const docs = Object.keys(data)
+      .filter((key) => key.startsWith("data/test-results/"))
+      .map((key) => JSON.parse(atob(data[key])));
+    return {
+      stats,
+      navCount: nav.length,
+      failure: docs.find((entry) => entry.name === "rejects invalid password")?.error?.message,
+      checkout: docs.find((entry) => entry.name === "charges the card")?.duration,
+      escaped: docs.find((entry) => entry.name === "escapes <script> text")?.name,
+    };
+  });
+  if (
+    junitData.stats.total !== 6 ||
+    junitData.stats.passed !== 3 ||
+    junitData.stats.failed !== 1 ||
+    junitData.stats.skipped !== 1 ||
+    junitData.stats.broken !== 1 ||
+    junitData.navCount !== 6 ||
+    junitData.failure !== "Expected an error banner" ||
+    junitData.checkout !== 1250 ||
+    junitData.escaped !== "escapes <script> text"
+  ) {
+    throw new Error(`JUnit mapping failed: ${JSON.stringify(junitData)}`);
+  }
+  // Multiple suites can start collapsed. Assert actual upstream UI grouping,
+  // and verify test details in the decoded Awesome data contract above.
+  await junitPage.getByText("Authentication", { exact: true }).first().waitFor({
+    state: "visible",
+    timeout: 12_000,
+  });
+  await junitPage.getByText("Checkout", { exact: true }).first().waitFor({
+    state: "visible",
+    timeout: 12_000,
+  });
+  if (junitErrors.length || junitOutgoing.length) {
+    throw new Error(
+      `JUnit browser errors: ${junitErrors.join("; ")}; external: ${junitOutgoing.join("; ")}`,
+    );
+  }
+  console.log("M4 browser smoke passed: six JUnit cases, native UI, no network upload.");
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));
