@@ -1,0 +1,47 @@
+#allure-importer {
+  box-sizing: border-box;
+  inline-size: min(100%, 48rem);
+  max-inline-size: 100%;
+  margin-inline: auto;
+  padding: clamp(1rem, 4vw, 2rem);
+  font-family: system-ui, sans-serif;
+}
+
+#allure-importer * {
+  box-sizing: border-box;
+}
+
+#allure-drop-target {
+  border: 2px dashed #5c6584;
+  border-radius: 0.65rem;
+  padding: 1rem;
+  margin-block: 1rem;
+  cursor: pointer;
+}
+
+#allure-drop-target:focus-visible {
+  outline: 3px solid #285ac4;
+  outline-offset: 3px;
+}
+
+#allure-importer label {
+  display: block;
+  font-weight: 600;
+  margin-block: 1rem 0.35rem;
+}
+
+#allure-importer input[type="file"] {
+  display: block;
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+
+#allure-importer button {
+  min-block-size: 2.75rem;
+}
+
+#allure-import-error:not(:empty) {
+  border-inline-start: 3px solid #ae2430;
+  padding-inline-start: 0.75rem;
+  overflow-wrap: anywhere;
+}
