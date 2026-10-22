@@ -1,0 +1,16 @@
+version = 1
+
+# Applies to the original project source and build configuration only.
+# Upstream Allure is pulled at build time and not stored as source here.
+[[annotations]]
+path = ["*", "**/*", ".*", ".github/**", ".github/workflows/**"]
+SPDX-FileCopyrightText = "2026 Allure Static Only contributors"
+SPDX-License-Identifier = "0BSD"
+
+# A verbatim pinned upstream Apache-2.0 manifest is included for auditability.
+# It is not relicensed as 0BSD; the last matching annotation takes precedence.
+[[annotations]]
+path = "third_party/allure3/web-awesome.package.json"
+precedence = "override"
+SPDX-FileCopyrightText = "Qameta Software"
+SPDX-License-Identifier = "Apache-2.0"

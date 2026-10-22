@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, readdir, readFile, writeFile } from "node:fs/promises";
+import { cp, lstat, mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -97,6 +97,13 @@ export async function prepareRelease(dist = defaultDist) {
   const notice = await readFile(path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"), "utf8");
   const provenance = await releaseProvenance();
   await enumerateFiles(dist);
+  await mkdir(path.join(dist, "LICENSES"), { recursive: true });
+  for (const license of ["0BSD", "Apache-2.0"]) {
+    await cp(
+      path.join(projectRoot, "LICENSES", `${license}.txt`),
+      path.join(dist, "LICENSES", `${license}.txt`),
+    );
+  }
   await writeFile(
     path.join(dist, "third-party-license-files.json"),
     `${JSON.stringify(await noticeFileInventory(dist), null, 2)}\n`,
@@ -121,6 +128,13 @@ export async function verifyRelease(dist = defaultDist) {
   const actualInventory = await readFile(path.join(dist, "third-party-license-files.json"), "utf8");
   if (actualInventory !== expectedInventory) {
     throw new Error("Bundler-emitted license text inventory differs from the static assets.");
+  }
+  for (const license of ["0BSD", "Apache-2.0"]) {
+    const source = await readFile(path.join(projectRoot, "LICENSES", `${license}.txt`));
+    const released = await readFile(path.join(dist, "LICENSES", `${license}.txt`));
+    if (!source.equals(released)) {
+      throw new Error(`Bundled ${license} license text differs from approved source.`);
+    }
   }
   const expectedNotice = await readFile(
     path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"),

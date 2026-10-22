@@ -26,5 +26,6 @@
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
     "typescript": "5.8.3"
-  }
+  },
+  "license": "0BSD"
 }
