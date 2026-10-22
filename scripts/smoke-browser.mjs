@@ -4,6 +4,8 @@ import { createRequire } from "node:module";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { staticContentType } from "./static-content-types.mjs";
+
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const dist = path.join(root, "dist");
 const fixture = path.join(root, ".allure-workspace", "m1-fixture-report");
@@ -11,15 +13,6 @@ const requireUpstream = createRequire(
   path.join(root, ".allure-workspace", "upstream", "package.json"),
 );
 const { chromium } = requireUpstream("@playwright/test");
-
-const mime = {
-  ".html": "text/html",
-  ".js": "text/javascript",
-  ".css": "text/css",
-  ".json": "application/json",
-  ".svg": "image/svg+xml",
-  ".woff2": "font/woff2",
-};
 
 const server = createServer(async (req, res) => {
   const url = new URL(req.url ?? "/", "http://localhost");
@@ -35,7 +28,7 @@ const server = createServer(async (req, res) => {
       return;
     }
     res.writeHead(200, {
-      "content-type": mime[path.extname(target)] ?? "application/octet-stream",
+      "content-type": staticContentType(target),
       "cache-control": "no-store",
     });
     res.end(await readFile(target));
@@ -56,7 +49,13 @@ try {
   const page = await browser.newPage();
   const errors = [];
   const outgoing = [];
+  const consoleErrors = [];
   page.on("pageerror", (error) => errors.push(error.message));
+  page.on("console", (message) => {
+    if (message.type() === "error") {
+      consoleErrors.push(message.text());
+    }
+  });
   page.on("request", (request) => {
     if (
       !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
@@ -68,14 +67,38 @@ try {
   });
   await page.goto(`http://127.0.0.1:${port}/`);
   await page.locator("#allure-input").setInputFiles(fixture);
-  await page.locator("#allure-importer").waitFor({ state: "hidden", timeout: 60_000 });
+  try {
+    await page.waitForFunction(
+      () =>
+        document.getElementById("allure-importer")?.hidden ||
+        Boolean(document.getElementById("allure-import-error")?.textContent),
+      undefined,
+      { timeout: 30_000 },
+    );
+  } catch (cause) {
+    const details = await page.locator("#allure-input").evaluate((input) => ({
+      count: input.files?.length ?? 0,
+      paths: Array.from(input.files ?? [])
+        .slice(0, 3)
+        .map((file) => file.webkitRelativePath),
+    }));
+    throw new Error(
+      `Importer did not finish: ${JSON.stringify(details)}; errors: ${errors.join("; ")}; console: ${consoleErrors.join("; ")}`,
+      { cause },
+    );
+  }
+  const importError = await page.locator("#allure-import-error").textContent();
+  if (importError?.trim()) {
+    throw new Error(`Browser import failed: ${importError.trim()}; console: ${consoleErrors.join("; ")}`);
+  }
+  await page.locator("#allure-importer").waitFor({ state: "hidden", timeout: 2_000 });
   await page.getByText("M1 browser fixture passing test", { exact: false }).first().waitFor({
     state: "visible",
     timeout: 60_000,
   });
-  if (errors.length || outgoing.length) {
+  if (errors.length || outgoing.length || consoleErrors.length) {
     throw new Error(
-      `Browser errors: ${errors.join("; ")}; external requests: ${outgoing.join("; ")}`,
+      `Browser errors: ${errors.join("; ")}; console: ${consoleErrors.join("; ")}; external requests: ${outgoing.join("; ")}`,
     );
   }
   console.log("M1 browser smoke passed: real Allure UI rendered a locally imported fixture.");
