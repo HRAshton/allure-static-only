@@ -7,8 +7,14 @@ import { CONTENT_SECURITY_POLICY, STATIC_SECURITY_HEADERS } from "../scripts/sta
 test("static security policy blocks executable report content and remote data access", async () => {
   assert.ok(CONTENT_SECURITY_POLICY.includes("script-src 'self'"));
   assert.ok(CONTENT_SECURITY_POLICY.includes("object-src 'none'"));
-  assert.ok(CONTENT_SECURITY_POLICY.includes("connect-src 'self'"));
+  assert.ok(CONTENT_SECURITY_POLICY.includes("connect-src 'self' data:"));
   assert.ok(CONTENT_SECURITY_POLICY.includes("base-uri 'self'"));
+  const connectPolicy = CONTENT_SECURITY_POLICY.split(";").find((part) =>
+    part.trim().startsWith("connect-src"),
+  );
+  assert.equal(connectPolicy?.trim(), "connect-src 'self' data:");
+  assert.equal(connectPolicy.includes("https:"), false);
+  assert.equal(connectPolicy.includes("http:"), false);
   assert.equal(CONTENT_SECURITY_POLICY.includes("unsafe-eval"), false);
   assert.equal(CONTENT_SECURITY_POLICY.includes("unsafe-inline';"), true);
   const scriptPolicy = CONTENT_SECURITY_POLICY.split(";").find((part) =>

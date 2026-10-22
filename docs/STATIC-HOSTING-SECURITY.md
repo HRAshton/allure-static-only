@@ -10,7 +10,7 @@ script-src 'self'
 style-src 'self' 'unsafe-inline'
 img-src 'self' data: blob:
 font-src 'self' data:
-connect-src 'self'
+connect-src 'self' data:
 media-src 'self' blob: data:
 worker-src 'self' blob:
 object-src 'none'
@@ -19,7 +19,7 @@ base-uri 'self'
 form-action 'none'
 ```
 
-Scripts must be loaded from the site origin. The policy excludes `'unsafe-inline'` and `'unsafe-eval'` for JavaScript. `'unsafe-inline'` is allowed only for **CSS styles**, needed by the pinned Allure UI; removing that allowance requires more upstream compatibility testing. Imported test names, error messages and attachment metadata are treated as untrusted content, not executable extensions. Image and media `data:`/`blob:` sources allow local attachments without network upload.
+Scripts must be loaded from the site origin. The upstream Allure Awesome loader fetches in-memory report documents using local `data:` URLs; `connect-src` explicitly permits `data:` for those browser-local reads while still excluding remote HTTP(S) destinations. This does not authorize uploading report bytes. The policy excludes `'unsafe-inline'` and `'unsafe-eval'` for JavaScript. `'unsafe-inline'` is allowed only for **CSS styles**, needed by the pinned Allure UI; removing that allowance requires more upstream compatibility testing. Imported test names, error messages and attachment metadata are treated as untrusted content, not executable extensions. Image and media `data:`/`blob:` sources allow local attachments without network upload.
 
 Nginx additionally sets `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`, a limited `Permissions-Policy`, and `X-Frame-Options: DENY`. GitHub Pages does not provide custom HTTP headers, so its CSP is **meta-enforced**; CSP `frame-ancestors`, `report-uri` and other header-only capabilities are not available through a meta tag. Do not claim equal clickjacking defense on Pages. For confidential reports, self-host using a reviewed Nginx configuration.
 
