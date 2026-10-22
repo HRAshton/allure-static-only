@@ -3,7 +3,6 @@ import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const lock = JSON.parse(await readFile(path.join(root, "upstream.lock.json"), "utf8"));
 const workspace = path.join(root, ".allure-workspace", "upstream");

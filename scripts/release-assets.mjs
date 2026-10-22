@@ -118,10 +118,7 @@ export async function verifyRelease(dist = defaultDist) {
     throw new Error("Release provenance differs from checked-in lockfiles.");
   }
   const expectedInventory = `${JSON.stringify(await noticeFileInventory(dist), null, 2)}\n`;
-  const actualInventory = await readFile(
-    path.join(dist, "third-party-license-files.json"),
-    "utf8",
-  );
+  const actualInventory = await readFile(path.join(dist, "third-party-license-files.json"), "utf8");
   if (actualInventory !== expectedInventory) {
     throw new Error("Bundler-emitted license text inventory differs from the static assets.");
   }
