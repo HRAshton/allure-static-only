@@ -1,0 +1,13 @@
+Allure Static Only, provisional release attribution
+
+Pinned upstream project: Allure Report 3
+Source: https://github.com/allure-framework/allure3
+Pinned revision: b26b092cc16c69a5fb74ea0d68e565d35a470ef4
+Upstream license declared by upstream.lock.json: Apache-2.0
+
+This NOTICE identifies the pinned upstream input, not a completed third-party
+license audit or an assertion that every bundled dependency uses Apache-2.0.
+Verify the final bundle's individual dependency licenses and required notices.
+The project's own distribution license must also be explicitly approved.
+
+Do not treat this provisional notice as clearance to publish v0.1.0-rc.1.

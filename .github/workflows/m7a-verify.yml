@@ -1,0 +1,48 @@
+name: M7a static release integrity acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m7a-release-integrity
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m7a-release-integrity
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Strict checks, unit coverage and artifact manifest regressions
+        run: |
+          npm ci
+          npm run verify
+      - name: Build pinned upstream from clean checkout
+        run: npm run build:upstream
+      - name: Prepare checksums, provenance and provisional NOTICE
+        run: |
+          npm run release:prepare
+          npm run release:verify
+          (cd dist && sha256sum -c SHA256SUMS)
+      - name: Verify Nginx static headers and release file serving
+        run: |
+          docker run -d --rm --name allure-static-m7a -p 127.0.0.1:18083:80 \
+            -v "$PWD/dist:/usr/share/nginx/html:ro" \
+            -v "$PWD/deployment/nginx.conf:/etc/nginx/conf.d/default.conf:ro" nginx:alpine
+          trap 'docker stop allure-static-m7a' EXIT
+          for n in $(seq 1 20); do
+            if curl -fsS http://127.0.0.1:18083/ >/dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsSI http://127.0.0.1:18083/ | grep -qi 'content-security-policy:'
+          curl -fsSI http://127.0.0.1:18083/bootstrap.mjs | grep -qi 'content-type: text/javascript'
+          curl -fsS http://127.0.0.1:18083/SHA256SUMS | cmp - dist/SHA256SUMS
+          curl -fsS http://127.0.0.1:18083/NOTICE.txt | cmp - dist/NOTICE.txt

@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, readFile, writeFile } from "node:fs/promises";
+import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -52,6 +52,8 @@ if (process.argv.includes("--probe")) {
 run("corepack", ["yarn", "install", "--immutable"], workspace);
 run("corepack", ["yarn", "build"], workspace);
 
+// Never mix a new release with stale files from an earlier upstream build.
+await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
 for (const moduleName of [
