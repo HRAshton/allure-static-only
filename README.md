@@ -4,7 +4,7 @@ A browser-only host for the **upstream Allure Awesome frontend** with build-appr
 
 ## Status
 
-M0–M3 have passed their milestone checks: the real upstream Allure 3 UI renders generated Awesome report directories and browser-imported raw `allure-results` JSON/ZIP files. JUnit XML support and the Pages demo are being verified in M4. The [roadmap](ROADMAP.md) describes remaining converters, hardening and the release-candidate gates. This repository is not a published npm SDK or a release-candidate-quality production distribution.
+M0–M3 have passed their milestone checks: the real upstream Allure 3 UI renders generated Awesome report directories and browser-imported raw `allure-results` JSON/ZIP files. JUnit XML support and the GitHub Pages demo are available; CTRF JSON is supported through the same public converter API and demo. The [roadmap](ROADMAP.md) describes remaining converters, hardening and the release-candidate gates. This repository is not a published npm SDK or a release-candidate-quality production distribution.
 
 ## Public converter API (v1)
 
@@ -12,7 +12,7 @@ M0–M3 have passed their milestone checks: the real upstream Allure 3 UI render
 
 The versioned TypeScript contract lives in `src/sdk/index.ts`. A trusted adapter implements `ReportConverter`, returns the normalized `TestReport`, and is registered in `src/config/converters.ts` with `defineConverters`. The build then bundles it into the static frontend. The converter does not import Allure internals or change the upstream UI.
 
-Currently only the built-in Allure results converter is registered. Additional format implementations are scheduled separately. Uploaded JavaScript modules and unreviewed runtime plugin execution are **not supported**.
+Built-in native Allure results and JUnit XML converters are registered. CTRF JSON support is being verified in M4b. Additional format implementations are scheduled separately. Uploaded JavaScript modules and unreviewed runtime plugin execution are **not supported**.
 
 ```sh
 npm ci

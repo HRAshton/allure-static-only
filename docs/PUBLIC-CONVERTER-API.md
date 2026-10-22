@@ -105,16 +105,17 @@ The runtime checks the converted report before generating Awesome data. The curr
 
 ### Registration
 
-`src/config/converters.ts` ships with built-in Allure and JUnit XML converters:
+`src/config/converters.ts` ships with built-in Allure, JUnit XML and CTRF JSON converters:
 
 ```ts
 import { allureResultsConverter } from "../converters/allure-results.ts";
 import { junitXmlConverter } from "../converters/junit-xml.ts";
+import { ctrfJsonConverter } from "../converters/ctrf-json.ts";
 import { defineConverters } from "../sdk/index.ts";
 
 export default defineConverters({
   apiVersion: 1,
-  converters: [allureResultsConverter, junitXmlConverter],
+  converters: [allureResultsConverter, junitXmlConverter, ctrfJsonConverter],
 });
 ```
 

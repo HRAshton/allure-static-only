@@ -42,3 +42,8 @@ The Playwright smoke asserts JUnit status counts, suite, duration, escaping and 
 ## Coverage policy
 
 Correctness gates (unit, TypeScript/Biome, browser fixture, offline/no-upload tests) are release blockers. Codecov can supplement them with coverage trends and patch coverage, but it cannot substitute for exercising DOMParser, ZIP and UI flows in a real browser. First collect a stable coverage baseline using Node's built-in coverage; then enforce project coverage without penalizing cross-browser-only code and enforce stricter patch coverage on new converter modules. No external Codecov token or required status check is configured by this milestone.
+
+
+## CTRF JSON in the same demo
+
+The static demo now also offers [a sample CTRF JSON report](../fixtures/demo-ctrf.json). A user can download it and select it through the same **Individual files** control. CTRF runs are identified by `reportFormat: "CTRF"` and a semantic `specVersion`, not by a privileged filename. See [CTRF mapping and limits](CTRF-CONVERTER.md) for implementation details.
