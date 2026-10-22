@@ -1,0 +1,45 @@
+name: M6e offline-after-load browser acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m6e-offline-after-load
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6e-offline-after-load
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Verify strict source and converter tests
+        run: |
+          npm ci
+          npm run verify
+          npm run bench:import
+      - name: Build pinned upstream and prepare actual Allure fixtures
+        run: |
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+      - name: Chromium normal and offline-after-load import acceptance
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs
+      - name: Install Firefox matching pinned Playwright dependency
+        run: node scripts/install-firefox.mjs
+      - name: Firefox normal and offline-after-load import acceptance
+        env:
+          BROWSER_ENGINE: firefox
+        run: node scripts/smoke-browser.mjs
