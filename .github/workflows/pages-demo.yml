@@ -46,11 +46,19 @@ jobs:
         env:
           CHROME_BIN: /usr/bin/google-chrome
         run: node scripts/smoke-browser.mjs
-      - name: Ensure Pages artifact is complete
+      - name: Package Pages with verified license texts, provenance and checksums
         run: |
           test -f dist/index.html
           test -f dist/demo/junit-sample.xml
           touch dist/.nojekyll
+          npm run release:prepare
+          npm run release:verify
+          (cd dist && sha256sum -c SHA256SUMS > /dev/null)
+          test -f dist/NOTICE.txt
+          test -f dist/LICENSES/0BSD.txt
+          test -f dist/LICENSES/Apache-2.0.txt
+          test -f dist/third-party-license-files.json
+          test -f dist/provenance.json
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
