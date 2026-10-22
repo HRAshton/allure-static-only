@@ -52,8 +52,8 @@ export async function readGeneratedAllure(files) {
     result[key] = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
   }
 
-  if (!Object.hasOwn(result, "widgets/stats.json")) {
-    throw new Error("Expected widgets/stats.json from a generated Allure Awesome report.");
+  if (!Object.hasOwn(result, "widgets/statistic.json")) {
+    throw new Error("Expected widgets/statistic.json from a generated Allure Awesome report.");
   }
 
   return result;

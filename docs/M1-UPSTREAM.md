@@ -34,7 +34,7 @@ npm run build:upstream
 # Then serve dist/ via Nginx and open in Chromium.
 ```
 
-Full upstream build, generated reference fixtures and browser rendering are **not verified** in the current environment (npm registry unavailable). The PR must not be merged until smoke testing confirms it loads a real Awesome fixture and displays tests, failures and attachments. The custom index markup and Webpack manifest assumptions may need adjustment.
+Full upstream build, generated reference fixtures and browser rendering are **not verified** in the current environment (npm registry unavailable). The PR must not be merged until smoke testing confirms it loads a real Awesome fixture and displays tests, failures and attachments. The upstream plugin uses the manifest key `main.js` (and optionally `main.css`), and the stats widget is `widgets/statistic.json`. These are source-verified, but the assembled page still needs a browser smoke test.
 
 ## Required browser checks
 
@@ -46,3 +46,7 @@ Full upstream build, generated reference fixtures and browser rendering are **no
 - Keep dependency provenance; adjust the bootstrap when the upstream data interface changes.
 
 This spike is a **hypothesis and useful starting code**, not proof of a working report viewer.
+
+## Limited CI
+
+Only M1 branch pushes (and deliberate manual dispatches) run the one-job, 20-minute-cap workflow. It does not trigger on every PR or future milestone branch. Its browser check uses a locally generated Allure fixture and fails if any third-party HTTP request is made by the injected shell. This is build-time verification only, not a production backend.

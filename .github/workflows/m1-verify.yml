@@ -1,0 +1,38 @@
+name: M1 one-branch feasibility verification
+
+on:
+  push:
+    branches:
+      - milestone/m1-upstream
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m1-feasibility
+  cancel-in-progress: true
+
+jobs:
+  check:
+    if: github.ref == 'refs/heads/milestone/m1-upstream' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Check project (no report uploads)
+        run: |
+          npm ci
+          npm run verify
+      - name: Build upstream UI and reference fixture
+        run: |
+          npm run upstream:probe
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+      - name: Static browser smoke
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs

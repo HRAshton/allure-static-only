@@ -45,9 +45,11 @@ await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, for
 await cp(path.join(root, "src", "shell", "import-generated.mjs"), path.join(dist, "import-generated.mjs"));
 
 const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
-const appScript = manifest["app.js"];
+const appScript = manifest["main.js"];
+const appCss = manifest["main.css"];
+const cssTag = typeof appCss === "string" ? `<link rel="stylesheet" href="./${appCss}" />` : "";
 if (typeof appScript !== "string" || !/^app-[a-f0-9]+\.js$/.test(appScript)) {
-  throw new Error("Unexpected upstream webpack app.js manifest entry.");
+  throw new Error("Unexpected upstream webpack main.js manifest entry.");
 }
 const html = `<!doctype html>
 <html lang="en">
@@ -56,6 +58,7 @@ const html = `<!doctype html>
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <base href="./" />
     <title>Allure Static Only</title>
+    ${cssTag}
     <script>
       window.allureReportData = {};
       window.allureReportDataReady = false;
