@@ -104,10 +104,12 @@ export async function readConvertedReport(files, options = {}, loadModules = loa
   assertNotCancelled(signal);
   const { converterRegistry, importBrowserReport, awesomeReportData, unzipReportFiles } =
     await loadModules();
+  assertNotCancelled(signal);
   const sourceFiles =
     files.length === 1 && /\.zip$/i.test(files[0].name)
       ? await unzipReportFiles(files[0], signal)
       : files;
+  assertNotCancelled(signal);
   const report = await importBrowserReport(sourceFiles, converterRegistry.converters, { signal });
   assertNotCancelled(signal);
   const { documents, binaries } = awesomeReportData(report);
