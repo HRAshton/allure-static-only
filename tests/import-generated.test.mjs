@@ -47,7 +47,7 @@ test("imports generated data locally", async () => {
 });
 
 test("rejects missing manifest and duplicate paths", async () => {
-  await assert.rejects(readGeneratedAllure([]), /widgets\/stats.json/);
+  await assert.rejects(readGeneratedAllure([]), /widgets\/statistic.json/);
   await assert.rejects(
     readGeneratedAllure([
       fakeFile("report1/widgets/statistic.json", "{}"),
