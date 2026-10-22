@@ -1,0 +1,47 @@
+name: M7b two independent clean build acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m7b-independent-builds
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m7b-independent-builds
+  cancel-in-progress: true
+
+jobs:
+  compare:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Strict source, manifest and mismatch regressions
+        run: |
+          npm ci
+          npm run verify
+      - name: Build same commit independently and compare all static asset bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          first="$RUNNER_TEMP/allure-clean-a"
+          second="$RUNNER_TEMP/allure-clean-b"
+          mkdir -p "$first" "$second"
+          git archive HEAD | tar -xf - -C "$first"
+          git archive HEAD | tar -xf - -C "$second"
+          for directory in "$first" "$second"; do
+            (
+              cd "$directory"
+              npm ci
+              npm run build:upstream
+              npm run release:prepare
+              npm run release:verify
+              (cd dist && sha256sum -c SHA256SUMS)
+            )
+          done
+          node scripts/compare-releases.mjs "$first/dist" "$second/dist"
