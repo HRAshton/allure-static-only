@@ -50,3 +50,7 @@ This spike is a **hypothesis and useful starting code**, not proof of a working 
 ## Limited CI
 
 Only M1 branch pushes (and deliberate manual dispatches) run the one-job, 20-minute-cap workflow. It does not trigger on every PR or future milestone branch. Its browser check uses a locally generated Allure fixture and fails if any third-party HTTP request is made by the injected shell. This is build-time verification only, not a production backend.
+
+## Browser integration finding
+
+A browser smoke test confirmed that the importer places the generated Awesome data into the upstream globals. The upstream UI must also receive a populated `allureReportOptions` object compatible with the options produced by the official Awesome report generator. In particular, a missing `createdAt` caused an `Invalid time value` runtime exception and an empty root DOM. M1's static bootstrap now provides a valid timestamp and stable version/identity fields. This does not close M1 until the end-to-end browser smoke test passes.

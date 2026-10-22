@@ -66,6 +66,10 @@ try {
     }
   });
   await page.goto(`http://127.0.0.1:${port}/`);
+  const createdAt = await page.evaluate(() => window.allureReportOptions.createdAt);
+  if (!Number.isFinite(createdAt) || Number.isNaN(new Date(createdAt).getTime())) {
+    throw new Error("Static Allure bootstrap has no valid createdAt timestamp.");
+  }
   await page.locator("#allure-input").setInputFiles(fixture);
   try {
     await page.waitForFunction(
