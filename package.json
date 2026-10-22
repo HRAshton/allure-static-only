@@ -18,7 +18,7 @@
     "smoke:m1": "node scripts/prepare-fixture.mjs && node scripts/smoke-browser.mjs",
     "build:browser": "tsc --project tsconfig.browser.json",
     "build:sdk": "tsc --project tsconfig.sdk.json",
-    "test:sdk-package": "node scripts/test-packed-sdk.mjs"
+    "test:sdk-package": "node scripts/verify-sdk-package.mjs"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
