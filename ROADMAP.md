@@ -48,10 +48,12 @@ Every milestone is one focused branch and one PR into `main`, then **squash merg
 - Document information-loss rules; preserve provenance and missing fields.
 - **Exit:** fixture-driven tests, deterministic auto-detection, errors on ambiguous input, no silent missing-field fabrication.
 
-### M5: Attachable converter contract
-- Publish a versioned TypeScript converter SDK; documented registration and an example external converter package.
+### M5: Attachable converter contract (public API foundation delivered early)
+- Establish the source-level public API v1 and documented build-time registration **ahead of M4 format implementations**, without requiring the project or Allure frontend to be forked.
+- Later publish/distribute a versioned TypeScript SDK and a complete external converter package example.
 - Prefer bundled adapters initially. Evaluate dynamic import of **trusted build-approved** modules; do not accept arbitrary uploaded JS.
-- **Exit:** adding a sample converter requires no edits to domain or upstream adapter, and incompatibilities fail with actionable errors.
+- **Public API foundation exit:** a trusted converter can be registered in a build-time config file without edits to the domain, shell or upstream adapter; tests cover incompatible API versions and duplicate registrations.
+- **Full M5 exit (later):** a separately maintained converter package and SDK distribution pass clean-clone Docker integration; incompatibilities fail with actionable errors.
 
 ### M6: Hardening and accessibility
 - HTML/script injection checks; ZIP bombs and traversal tests; file/attachment URL cleanup; large-file budget.

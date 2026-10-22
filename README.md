@@ -1,18 +1,33 @@
 # allure-static-only
 
-A browser-only host for the upstream Allure frontend with pluggable, client-side report converters. Production deployment consists of static assets served by Nginx (or any static file server), with no API, database, upload service, or report-generation process at runtime.
+A browser-only host for the **upstream Allure Awesome frontend** with build-approved, client-side report converters. Production deployment consists exclusively of static HTML, CSS, JavaScript and assets served by Nginx (or any static file server). Reports never need to be uploaded to a backend.
 
 ## Status
 
-Early development. The [roadmap](ROADMAP.md) defines the acceptance gates to a release candidate. Until an upstream Allure integration is demonstrated, no claim is made that the native Allure UI can load arbitrary raw results.
+M0–M3 have passed their milestone checks: the real upstream Allure 3 UI renders generated Awesome report directories and browser-imported raw `allure-results` JSON/ZIP files. The [roadmap](ROADMAP.md) describes remaining converters, hardening and the release-candidate gates. This repository is not a published npm SDK or a release-candidate-quality production distribution.
+
+## Public converter API (v1)
+
+**[Read the public API and build-time integration guide](docs/PUBLIC-CONVERTER-API.md).**
+
+The versioned TypeScript contract lives in `src/sdk/index.ts`. A trusted adapter implements `ReportConverter`, returns the normalized `TestReport`, and is registered in `src/config/converters.ts` with `defineConverters`. The build then bundles it into the static frontend. The converter does not import Allure internals or change the upstream UI.
+
+Currently only the built-in Allure results converter is registered. Additional format implementations are scheduled separately. Uploaded JavaScript modules and unreviewed runtime plugin execution are **not supported**.
+
+```sh
+npm ci
+npm run verify
+npm run build:upstream
+```
+
+For a Docker multistage build, custom adapters and their build-time registry should be copied **before** verification and build. See the guide for the full example.
 
 ## Product constraints
 
-- Reuse the upstream Allure UI through a reproducible, pinned, build-time integration. Do not maintain an upstream fork.
-- Parse imported files locally in the browser; never upload test artifacts.
-- Extend import support using explicit, versioned converter contracts.
-- Keep the production artifact fully static.
-- Use small, verified PRs and squash merges into `main`.
-- Keep automation inexpensive; avoid workflow spam.
+- Reuse pinned upstream Allure UI; do not maintain a permanent upstream fork.
+- Parse user-supplied reports only in the browser; no upload endpoint or runtime CLI.
+- Accept extensions through a versioned, explicit converter registry.
+- Reject ambiguous detection and untrusted paths or oversized archive entries.
+- Keep production entirely static and use reproducible milestone verification.
 
-See [ROADMAP.md](ROADMAP.md) for the development stages after initialization.
+See [ROADMAP.md](ROADMAP.md) for milestones and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for dependency rules.
