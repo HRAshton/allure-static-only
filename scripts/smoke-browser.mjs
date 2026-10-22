@@ -139,7 +139,158 @@ try {
       `Browser errors: ${errors.join("; ")}; console: ${consoleErrors.join("; ")}; external requests: ${outgoing.join("; ")}`,
     );
   }
-  console.log("M1 browser smoke passed: real Allure UI rendered a locally imported fixture.");
+  const rawPage = await browser.newPage();
+  const rawErrors = [];
+  const rawOutgoing = [];
+  rawPage.on("pageerror", (error) => rawErrors.push(error.message));
+  rawPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      rawOutgoing.push(request.url());
+    }
+  });
+  await rawPage.goto(`http://127.0.0.1:${port}/`);
+  await rawPage
+    .locator("#allure-input")
+    .setInputFiles(path.join(root, ".allure-workspace", "m1-fixture-results"));
+  await rawPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 15_000 });
+  try {
+    await rawPage.getByText("Static Import", { exact: true }).first().click();
+    await rawPage.getByText("M1 browser fixture passing test").first().waitFor({
+      state: "visible",
+      timeout: 15_000,
+    });
+  } catch (cause) {
+    const text = await rawPage.locator("#app").innerText();
+    throw new Error(
+      `Raw Allure result not visible: ${text.slice(0, 1_000)}; errors: ${rawErrors.join("; ")}`,
+      { cause },
+    );
+  }
+  if (rawErrors.length || rawOutgoing.length) {
+    throw new Error(
+      `Raw import errors: ${rawErrors.join("; ")}; uploads: ${rawOutgoing.join("; ")}`,
+    );
+  }
+  const zipPage = await browser.newPage();
+  const zipErrors = [];
+  const zipOutgoing = [];
+  zipPage.on("pageerror", (error) => zipErrors.push(error.message));
+  zipPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      zipOutgoing.push(request.url());
+    }
+  });
+  await zipPage.goto(`http://127.0.0.1:${port}/`);
+  await zipPage
+    .locator("#allure-files-input")
+    .setInputFiles(path.join(root, ".allure-workspace", "m3-fixture.zip"));
+  await zipPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 15_000 });
+  try {
+    await zipPage.getByText("Static Import", { exact: true }).first().click();
+    await zipPage.getByText("M1 browser fixture passing test").first().waitFor({
+      state: "visible",
+      timeout: 15_000,
+    });
+  } catch (cause) {
+    const rendered = await zipPage.locator("#app").innerText();
+    throw new Error(
+      `ZIP report not visible: ${rendered.slice(0, 1_000)}; errors: ${zipErrors.join("; ")}`,
+      { cause },
+    );
+  }
+  if (zipErrors.length || zipOutgoing.length) {
+    throw new Error(
+      `ZIP import errors: ${zipErrors.join("; ")}; uploads: ${zipOutgoing.join("; ")}`,
+    );
+  }
+  const richerPage = await browser.newPage();
+  const richErrors = [];
+  const richOutgoing = [];
+  richerPage.on("pageerror", (error) => richErrors.push(error.message));
+  richerPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      richOutgoing.push(request.url());
+    }
+  });
+  await richerPage.goto(`http://127.0.0.1:${port}/`);
+  await richerPage
+    .locator("#allure-files-input")
+    .setInputFiles(path.join(root, ".allure-workspace", "m3-complex.zip"));
+  await richerPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 15_000 });
+  const dataCheck = await richerPage.evaluate(() => {
+    const data = window.allureReportData;
+    const stats = JSON.parse(atob(data["widgets/statistic.json"]));
+    const nav = JSON.parse(atob(data["widgets/nav.json"]));
+    const docs = Object.keys(data)
+      .filter((key) => key.startsWith("data/test-results/"))
+      .map((key) => JSON.parse(atob(data[key])));
+    const screenshot = docs.find((doc) => doc.name === "M3 screenshot test");
+    const retry = docs.find((doc) => doc.name === "M3 flaky test" && !doc.isRetry);
+    const nested = screenshot?.steps[0]?.steps[0];
+    const attachment = nested?.steps.find((step) => step.type === "attachment")?.link;
+    const image = attachment
+      ? data[`data/attachments/${attachment.id}${attachment.ext}`]
+      : undefined;
+    return {
+      stats,
+      navCount: nav.length,
+      nestedName: nested?.name,
+      attachment: attachment?.contentType,
+      imageSignature: image ? atob(image).slice(0, 4) : null,
+      retryCount: retry?.retriesCount,
+      retryStatus: retry?.retries?.[0]?.status,
+    };
+  });
+  if (
+    dataCheck.stats.total !== 4 ||
+    dataCheck.stats.passed !== 2 ||
+    dataCheck.stats.failed !== 1 ||
+    dataCheck.stats.skipped !== 1 ||
+    dataCheck.navCount !== 4 ||
+    dataCheck.nestedName !== "Inner screenshot step" ||
+    dataCheck.attachment !== "image/png" ||
+    dataCheck.imageSignature !== "\x89PNG" ||
+    dataCheck.retryCount !== 1 ||
+    dataCheck.retryStatus !== "failed"
+  ) {
+    throw new Error(`M3 complex result normalization failed: ${JSON.stringify(dataCheck)}`);
+  }
+  const screenshotLeaf = richerPage.getByText("M3 screenshot test", { exact: false }).first();
+  if (!(await screenshotLeaf.isVisible())) {
+    await richerPage.getByText("M3 Validation", { exact: true }).first().click();
+  }
+  try {
+    await screenshotLeaf.waitFor({ state: "visible", timeout: 12_000 });
+    await screenshotLeaf.click();
+    await richerPage.getByText("Outer screenshot step", { exact: false }).first().waitFor({
+      state: "visible",
+      timeout: 12_000,
+    });
+  } catch (cause) {
+    const markup = await richerPage.locator("#app").innerText();
+    throw new Error(
+      `M3 result leaf not visible: ${markup.slice(0, 2_000)}; errors: ${richErrors.join("; ")}`,
+      { cause },
+    );
+  }
+  if (richErrors.length || richOutgoing.length) {
+    throw new Error(
+      `Complex ZIP errors: ${richErrors.join("; ")}; requests: ${richOutgoing.join("; ")}`,
+    );
+  }
+  console.log("M3 browser smoke passed: raw JSON, ZIP, statuses, retries, steps and PNG.");
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));

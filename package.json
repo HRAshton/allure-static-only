@@ -14,7 +14,8 @@
     "verify": "npm run check && npm run typecheck && npm test",
     "upstream:probe": "node scripts/build-upstream.mjs --probe",
     "build:upstream": "node scripts/build-upstream.mjs",
-    "smoke:m1": "node scripts/prepare-fixture.mjs && node scripts/smoke-browser.mjs"
+    "smoke:m1": "node scripts/prepare-fixture.mjs && node scripts/smoke-browser.mjs",
+    "build:browser": "tsc --project tsconfig.browser.json"
   },
   "devDependencies": {
     "@biomejs/biome": "2.5.15",
