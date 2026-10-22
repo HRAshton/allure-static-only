@@ -1,0 +1,20 @@
+{
+  "name": "allure-static-only",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.16.0"
+  },
+  "scripts": {
+    "check": "biome check . && node scripts/check-boundaries.mjs",
+    "check:fix": "biome check --write .",
+    "typecheck": "tsc --noEmit --project tsconfig.json",
+    "test": "node --experimental-strip-types --test",
+    "verify": "npm run check && npm run typecheck && npm test"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.15",
+    "typescript": "5.8.3"
+  }
+}
