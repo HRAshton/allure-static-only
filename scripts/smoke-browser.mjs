@@ -70,6 +70,17 @@ try {
   if (!Number.isFinite(createdAt) || Number.isNaN(new Date(createdAt).getTime())) {
     throw new Error("Static Allure bootstrap has no valid createdAt timestamp.");
   }
+  const invalidDrop = await page.evaluateHandle(() => {
+    const transfer = new DataTransfer();
+    transfer.items.add(new File(["invalid"], "notes.txt"));
+    return transfer;
+  });
+  await page.locator("#allure-drop-target").dispatchEvent("drop", {
+    dataTransfer: invalidDrop,
+  });
+  await page.waitForFunction(() =>
+    document.getElementById("allure-import-error")?.textContent.includes("statistic.json"),
+  );
   await page.locator("#allure-input").setInputFiles(fixture);
   try {
     await page.waitForFunction(

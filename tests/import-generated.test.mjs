@@ -56,3 +56,38 @@ test("rejects missing manifest and duplicate paths", async () => {
     /Duplicate/,
   );
 });
+
+test("reports progress and supports cancellation", async () => {
+  const progress = [];
+  const report = await readGeneratedAllure(
+    [
+      fakeFile("awesome/widgets/statistic.json", '{"total":1}'),
+      fakeFile("awesome/widgets/tree.json", "{}"),
+    ],
+    { onProgress: (update) => progress.push(update) },
+  );
+  assert.equal(Object.keys(report).length, 2);
+  assert.equal(progress.length, 2);
+  assert.equal(progress.at(-1).processedBytes, progress.at(-1).totalBytes);
+
+  const controller = new AbortController();
+  controller.abort();
+  await assert.rejects(
+    readGeneratedAllure([fakeFile("awesome/widgets/statistic.json", "{}")], {
+      signal: controller.signal,
+    }),
+    /cancelled/,
+  );
+});
+
+test("rejects oversized generated files before reading them", async () => {
+  const big = {
+    name: "statistic.json",
+    webkitRelativePath: "awesome/widgets/statistic.json",
+    size: 32 * 1024 * 1024 + 1,
+    async arrayBuffer() {
+      throw new Error("Should not read an oversized file");
+    },
+  };
+  await assert.rejects(readGeneratedAllure([big]), /32 MiB/);
+});

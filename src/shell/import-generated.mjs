@@ -1,25 +1,31 @@
+import { bindBrowserImportEvents } from "./browser-import.mjs";
+
 const MAX_FILES = 2_000;
+const MAX_FILE_BYTES = 32 * 1024 * 1024;
 const MAX_BYTES = 64 * 1024 * 1024;
 
-/** Isolate only generated Allure data paths, never accept traversal or absolute paths. */
+function assertNotCancelled(signal) {
+  if (signal?.aborted) {
+    throw new Error("Import cancelled.");
+  }
+}
+
+/** Isolate generated report paths, rejecting traversal and absolute paths. */
 export function normalizedGeneratedPath(filePath) {
   if (
     /^(?:[\\/]|[a-zA-Z]:[\\/])/.test(filePath) ||
-    [...filePath].some((char) => char.charCodeAt(0) < 32)
+    [...filePath].some((char) => char.charCodeAt(0) < 32 || char.charCodeAt(0) === 127)
   ) {
     return undefined;
   }
-
   const parts = filePath.replaceAll("\\", "/").split("/");
   if (parts.includes("..") || parts.includes(".")) {
     return undefined;
   }
-
   const root = parts.findIndex((part) => part === "data" || part === "widgets");
   if (root < 0 || root === parts.length - 1 || parts.slice(root).some((part) => !part)) {
     return undefined;
   }
-
   return parts.slice(root).join("/");
 }
 
@@ -31,61 +37,115 @@ export function bytesToBase64(bytes) {
   return btoa(raw);
 }
 
-/** M1 proof only: accepts already-generated Allure Awesome output, NOT raw allure-results. */
-export async function readGeneratedAllure(files) {
+/** M2 imports generated Awesome data; raw allure-results conversion belongs to M3. */
+export async function readGeneratedAllure(files, options = {}) {
+  const { signal, onProgress } = options;
+  assertNotCancelled(signal);
   if (files.length > MAX_FILES) {
     throw new Error("Too many files in the report directory.");
   }
 
-  const result = Object.create(null);
+  const accepted = [];
+  const seen = new Set();
   let totalBytes = 0;
   for (const file of files) {
     const key = normalizedGeneratedPath(file.webkitRelativePath || file.name);
     if (!key) {
       continue;
     }
-
-    totalBytes += file.size;
-    if (totalBytes > MAX_BYTES) {
-      throw new Error("Generated report exceeds the 64 MiB M1 import limit.");
-    }
-    if (Object.hasOwn(result, key)) {
+    if (seen.has(key)) {
       throw new Error(`Duplicate generated report path: ${key}`);
     }
-    result[key] = bytesToBase64(new Uint8Array(await file.arrayBuffer()));
+    seen.add(key);
+    if (!Number.isSafeInteger(file.size) || file.size > MAX_FILE_BYTES) {
+      throw new Error(`File exceeds the 32 MiB limit: ${key}`);
+    }
+    totalBytes += file.size;
+    if (!Number.isSafeInteger(totalBytes) || totalBytes > MAX_BYTES) {
+      throw new Error("Generated report exceeds the 64 MiB import limit.");
+    }
+    accepted.push({ file, key });
   }
-
-  if (!Object.hasOwn(result, "widgets/statistic.json")) {
+  if (!seen.has("widgets/statistic.json")) {
     throw new Error("Expected widgets/statistic.json from a generated Allure Awesome report.");
   }
 
+  const result = Object.create(null);
+  let processedBytes = 0;
+  for (const { file, key } of accepted) {
+    assertNotCancelled(signal);
+    const bytes = new Uint8Array(await file.arrayBuffer());
+    assertNotCancelled(signal);
+    result[key] = bytesToBase64(bytes);
+    processedBytes += bytes.byteLength;
+    onProgress?.({ processedBytes, totalBytes });
+  }
   return result;
 }
 
 function initializeImporter() {
-  const input = document.getElementById("allure-input");
+  const directoryInput = document.getElementById("allure-input");
+  const filesInput = document.getElementById("allure-files-input");
   const overlay = document.getElementById("allure-importer");
+  const dropTarget = document.getElementById("allure-drop-target");
   const errorElement = document.getElementById("allure-import-error");
-
-  if (!(input instanceof HTMLInputElement) || !overlay || !errorElement) {
+  const progressElement = document.getElementById("allure-import-progress");
+  const cancelButton = document.getElementById("allure-cancel");
+  if (
+    !(directoryInput instanceof HTMLInputElement) ||
+    !(filesInput instanceof HTMLInputElement) ||
+    !(cancelButton instanceof HTMLButtonElement) ||
+    !overlay ||
+    !dropTarget ||
+    !errorElement ||
+    !progressElement
+  ) {
     throw new Error("Static report importer markup is missing.");
   }
-
-  input.addEventListener("change", async () => {
+  const inputs = [directoryInput, filesInput];
+  let controller;
+  const setBusy = (busy) => {
+    for (const input of inputs) {
+      input.disabled = busy;
+    }
+    cancelButton.hidden = !busy;
+  };
+  const onFiles = async (files) => {
+    if (controller) {
+      throw new Error("An import is already in progress.");
+    }
+    controller = new AbortController();
     errorElement.textContent = "";
-    input.disabled = true;
+    progressElement.textContent = "Loading report locally";
+    setBusy(true);
     try {
-      const data = await readGeneratedAllure(Array.from(input.files ?? []));
-      // This existing interface is read by @allurereport/web-commons/src/data.ts.
+      const data = await readGeneratedAllure(files, {
+        signal: controller.signal,
+        onProgress({ processedBytes, totalBytes }) {
+          progressElement.textContent = `Loaded ${processedBytes} / ${totalBytes} bytes locally`;
+        },
+      });
+      assertNotCancelled(controller.signal);
       window.allureReportData = data;
       window.allureReportDataReady = true;
       overlay.hidden = true;
     } catch (error) {
       errorElement.textContent = error instanceof Error ? error.message : "Import failed.";
     } finally {
-      input.disabled = false;
+      controller = undefined;
+      setBusy(false);
     }
+  };
+  cancelButton.addEventListener("click", () => controller?.abort());
+  bindBrowserImportEvents({
+    dropTarget,
+    inputs,
+    onFiles,
+    onError(error) {
+      errorElement.textContent = error instanceof Error ? error.message : "Import failed.";
+    },
   });
+  setBusy(false);
 }
 
 if (typeof document !== "undefined") {

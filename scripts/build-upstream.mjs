@@ -52,10 +52,9 @@ run("corepack", ["yarn", "build"], workspace);
 
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-await cp(
-  path.join(root, "src", "shell", "import-generated.mjs"),
-  path.join(dist, "import-generated.mjs"),
-);
+for (const moduleName of ["browser-import.mjs", "import-generated.mjs"]) {
+  await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
+}
 
 const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
 const appScript = manifest["main.js"];
@@ -101,8 +100,15 @@ const html = `<!doctype html>
       <h1>Open a generated Allure Awesome report</h1>
       <p>M1 proof: select a generated report directory containing widgets/ and data/.
          Raw allure-results import will come in M3.</p>
+      <div id="allure-drop-target" role="region" aria-label="Drop report files">
+        <p>Drop generated report files here or select a directory.</p>
+      </div>
       <label for="allure-input">Report directory</label>
       <input id="allure-input" type="file" webkitdirectory multiple />
+      <label for="allure-files-input">Individual files</label>
+      <input id="allure-files-input" type="file" multiple />
+      <button id="allure-cancel" type="button" hidden>Cancel import</button>
+      <p id="allure-import-progress" role="status" aria-live="polite"></p>
       <p id="allure-import-error" role="alert"></p>
     </main>
     <div id="app"></div>
