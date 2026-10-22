@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 
 import defaultRegistry from "../src/extensions/converters.ts";
-import { chooseConverter, AmbiguousReportError } from "../src/runtime/choose-converter.ts";
+import { AmbiguousReportError, chooseConverter } from "../src/runtime/choose-converter.ts";
 import { importBrowserReport } from "../src/runtime/import-browser-report.ts";
 import { CONVERTER_API_VERSION, defineConverters } from "../src/sdk/index.ts";
 
