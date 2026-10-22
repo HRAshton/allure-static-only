@@ -56,6 +56,11 @@ for (const moduleName of ["browser-import.mjs", "import-generated.mjs"]) {
   await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
 }
 run("npm", ["run", "build:browser"]);
+await mkdir(path.join(dist, "demo"), { recursive: true });
+await cp(
+  path.join(root, "fixtures", "demo-junit.xml"),
+  path.join(dist, "demo", "junit-sample.xml"),
+);
 
 const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
 const appScript = manifest["main.js"];
@@ -98,9 +103,11 @@ const html = `<!doctype html>
   </head>
   <body>
     <main id="allure-importer">
-      <h1>Open a test report</h1>
-      <p>Import raw results using a registered format converter, or select a
-         generated Allure Awesome report directory. Files stay in this browser.</p>
+      <h1>Allure Static Demo</h1>
+      <p>Drop JUnit XML or native Allure results here, or select a file or directory.
+         Reports are processed in your browser and never uploaded.</p>
+      <p><a href="./demo/junit-sample.xml" download="junit-sample.xml">
+         Download a sample JUnit report</a> to try the importer.</p>
       <div id="allure-drop-target" role="region" aria-label="Drop report files">
         <p>Drop report files here or select a directory.</p>
       </div>

@@ -1,4 +1,5 @@
 import { allureResultsConverter } from "../converters/allure-results.ts";
+import { junitXmlConverter } from "../converters/junit-xml.ts";
 import { defineConverters } from "../sdk/index.ts";
 
 /**
@@ -8,5 +9,5 @@ import { defineConverters } from "../sdk/index.ts";
  */
 export default defineConverters({
   apiVersion: 1,
-  converters: [allureResultsConverter],
+  converters: [allureResultsConverter, junitXmlConverter],
 });

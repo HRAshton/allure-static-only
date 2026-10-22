@@ -4,7 +4,7 @@ A browser-only host for the **upstream Allure Awesome frontend** with build-appr
 
 ## Status
 
-M0–M3 have passed their milestone checks: the real upstream Allure 3 UI renders generated Awesome report directories and browser-imported raw `allure-results` JSON/ZIP files. The [roadmap](ROADMAP.md) describes remaining converters, hardening and the release-candidate gates. This repository is not a published npm SDK or a release-candidate-quality production distribution.
+M0–M3 have passed their milestone checks: the real upstream Allure 3 UI renders generated Awesome report directories and browser-imported raw `allure-results` JSON/ZIP files. JUnit XML support and the Pages demo are being verified in M4. The [roadmap](ROADMAP.md) describes remaining converters, hardening and the release-candidate gates. This repository is not a published npm SDK or a release-candidate-quality production distribution.
 
 ## Public converter API (v1)
 

@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuites name="Demo JUnit suite">
+  <testsuite name="Authentication" tests="3" failures="1" skipped="1">
+    <testcase classname="demo.auth.LoginTest" name="signs in successfully" time="0.234"/>
+    <testcase classname="demo.auth.LoginTest" name="rejects invalid password" time="0.105">
+      <failure message="Expected an error banner">Assertion failed at LoginTest.java:42</failure>
+    </testcase>
+    <testcase classname="demo.auth.LoginTest" name="SSO provider unavailable">
+      <skipped message="Identity provider offline"/>
+    </testcase>
+  </testsuite>
+  <testsuite name="Shopping Cart">
+    <testsuite name="Checkout">
+      <testcase classname="demo.cart.CheckoutTest" name="charges the card" time="1.250"/>
+      <testcase classname="demo.cart.CheckoutTest" name="fails on network error">
+        <error message="Test infrastructure disconnected"/>
+      </testcase>
+      <testcase classname="demo.cart.CheckoutTest" name="escapes &lt;script&gt; text" time="0.001"/>
+    </testsuite>
+  </testsuite>
+</testsuites>

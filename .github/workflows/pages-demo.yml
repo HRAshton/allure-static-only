@@ -1,0 +1,72 @@
+name: Deploy static Allure demo to GitHub Pages
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "src/**"
+      - "scripts/**"
+      - "fixtures/**"
+      - "package.json"
+      - "package-lock.json"
+      - "upstream.lock.json"
+      - "tsconfig*.json"
+      - ".github/workflows/pages-demo.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: github-pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Verify converters and code quality
+        run: |
+          npm ci
+          npm run verify
+      - name: Produce static assets from pinned upstream Allure
+        run: |
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+      - name: Verify JUnit XML browser upload and no external report requests
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs
+      - name: Ensure Pages artifact is complete
+        run: |
+          test -f dist/index.html
+          test -f dist/demo/junit-sample.xml
+          touch dist/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  deploy:
+    runs-on: ubuntu-24.04
+    needs: build
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Verify Pages is enabled for GitHub Actions
+        uses: actions/configure-pages@v5
+      - name: Publish static demo
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -41,7 +41,7 @@ test("API version 1 is registered in the default source configuration", () => {
   assert.equal(registered.apiVersion, 1);
   assert.deepEqual(
     registered.converters.map(({ id }) => id),
-    ["allure-results"],
+    ["allure-results", "junit-xml"],
   );
   assert.equal(Object.isFrozen(registered.converters), true);
 });
