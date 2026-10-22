@@ -49,7 +49,8 @@ Every milestone is one focused branch and one PR into `main`, then **squash merg
 - **Exit:** fixture-driven tests, deterministic auto-detection, errors on ambiguous input, no silent missing-field fabrication.
 
 ### M5: Attachable converter contract
-- Publish a versioned TypeScript converter SDK; documented registration and an example external converter package.
+- Establish a source-level v1 TypeScript converter API and documented build-time registration ahead of format expansion; publish a standalone npm SDK only after package/export and semver decisions.
+- Document registration and an example downstream converter package.
 - Prefer bundled adapters initially. Evaluate dynamic import of **trusted build-approved** modules; do not accept arbitrary uploaded JS.
 - **Exit:** adding a sample converter requires no edits to domain or upstream adapter, and incompatibilities fail with actionable errors.
 

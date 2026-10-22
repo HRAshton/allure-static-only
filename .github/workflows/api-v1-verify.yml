@@ -1,0 +1,41 @@
+name: Public API v1 integration verification
+
+on:
+  push:
+    branches:
+      - milestone/api-v1
+
+permissions:
+  contents: read
+
+concurrency:
+  group: api-v1-feasibility
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Verify typed public SDK and tests
+        run: |
+          npm ci
+          npm run verify
+          npm run build:browser
+      - name: Build pinned upstream and fixture
+        run: |
+          npm run upstream:probe
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+      - name: Static Chromium regression
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+          node scripts/smoke-browser.mjs

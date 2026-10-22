@@ -36,3 +36,14 @@ The Allure Awesome UI's data contract is not assumed to be public or stable. The
 ## Merge policy
 
 One milestone per PR, manual local checks, squash merge only. No GitHub Actions on each push by default. GitHub protections and mandatory external approvals always take priority.
+
+## Public converter SDK boundary (source-level v1)
+
+`src/sdk/index.ts` is the versioned, Allure-independent public converter entry
+point. `src/extensions/converters.ts` is its sole build-time registration
+manifest. A downstream converter may depend on the SDK and domain types but
+not on the private Awesome data adapter. The browser shell imports the compiled
+registry at runtime; no arbitrary uploaded script can join it.
+
+See [the public converter API reference](CONVERTER-API.md) for extension,
+detection, security, Docker build and compatibility requirements.

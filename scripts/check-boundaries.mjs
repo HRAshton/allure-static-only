@@ -6,7 +6,9 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const sourceRoot = path.join(root, "src");
 const dependencies = {
   domain: new Set(["domain"]),
-  converters: new Set(["converters", "domain"]),
+  sdk: new Set(["sdk", "domain"]),
+  converters: new Set(["converters", "sdk", "domain"]),
+  extensions: new Set(["extensions", "converters", "sdk", "domain"]),
   runtime: new Set(["runtime", "converters", "domain"]),
   "allure-adapter": new Set(["allure-adapter", "runtime", "converters", "domain"]),
   shell: new Set(["shell", "allure-adapter", "runtime", "converters", "domain"]),

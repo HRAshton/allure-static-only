@@ -4,7 +4,7 @@ A browser-only host for the upstream Allure frontend with pluggable, client-side
 
 ## Status
 
-Early development. The [roadmap](ROADMAP.md) defines the acceptance gates to a release candidate. Until an upstream Allure integration is demonstrated, no claim is made that the native Allure UI can load arbitrary raw results.
+Early development through M3: the original pinned Allure 3 Awesome UI has passed browser smoke tests for generated report directories, raw Allure JSON, and raw ZIP results. Broader format, browser, security and deployment support remains on the [roadmap](ROADMAP.md).
 
 ## Product constraints
 
@@ -16,3 +16,14 @@ Early development. The [roadmap](ROADMAP.md) defines the acceptance gates to a r
 - Keep automation inexpensive; avoid workflow spam.
 
 See [ROADMAP.md](ROADMAP.md) for the development stages after initialization.
+
+## Converter extensions
+
+Trusted downstream developers can add a converter at build time by implementing
+the **public v1 source-level contract** in `src/sdk/index.ts` and registering
+it in `src/extensions/converters.ts`. The import shell then detects compatible
+formats automatically, without a private Allure API dependency.
+
+See [Public converter API, examples and Docker integration](docs/CONVERTER-API.md).
+Runtime installation of uploaded JavaScript and a published npm SDK are **not**
+available. New built-in report formats will follow in later milestones.
