@@ -53,7 +53,8 @@ Every milestone is one focused branch and one PR into `main`, then **squash merg
 - Later publish/distribute a versioned TypeScript SDK and a complete external converter package example.
 - Prefer bundled adapters initially. Evaluate dynamic import of **trusted build-approved** modules; do not accept arbitrary uploaded JS.
 - **Public API foundation exit:** a trusted converter can be registered in a build-time config file without edits to the domain, shell or upstream adapter; tests cover incompatible API versions and duplicate registrations.
-- **Full M5 exit (later):** a separately maintained converter package and SDK distribution pass clean-clone Docker integration; incompatibilities fail with actionable errors.
+- **M5b source-overlay acceptance: passed.** A separately organized trusted converter plus registry manifest build from a clean checkout into a multistage Nginx Docker image; Chromium verifies actual Awesome rendering with no external report requests.
+- **Remaining full M5 exit (later):** publish a separately versioned npm SDK/package, document semver migration, and verify independently distributed package integration in a clean build.
 
 ### M6: Hardening and accessibility
 - HTML/script injection checks; ZIP bombs and traversal tests; file/attachment URL cleanup; large-file budget.

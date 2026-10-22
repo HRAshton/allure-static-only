@@ -245,6 +245,6 @@ Converter API **major version 1** is fixed for this source-level contract. Addit
 - Running JavaScript uploaded alongside the report; sandboxing arbitrary plugins.
 - Plugging in custom renderers or bypassing the Awesome adapter.
 - Guarantees that every Allure feature maps through the current normalized v1 model.
-- Firefox/Safari matrices, production Docker smoke, and release candidate hardening.
+- Firefox/Safari matrices, broader Nginx deployment/security matrices, and release candidate hardening. The source-overlay Docker+Chromium smoke is already covered by [the external converter build guide](EXTERNAL-CONVERTER-BUILD.md).
 
-Additional report format converters will be implemented on top of this API in later milestones, not inserted directly into the frontend.
+The built-in Allure, JUnit XML and CTRF JSON format converters use this API. Further formats should extend it rather than patching the upstream frontend.

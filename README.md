@@ -12,6 +12,8 @@ M0–M3 have passed their milestone checks: the real upstream Allure 3 UI render
 
 The versioned TypeScript contract lives in `src/sdk/index.ts`. A trusted adapter implements `ReportConverter`, returns the normalized `TestReport`, and is registered in `src/config/converters.ts` with `defineConverters`. The build then bundles it into the static frontend. The converter does not import Allure internals or change the upstream UI.
 
+A **clean Docker source-overlay integration** is available in [examples/company-adapter](examples/company-adapter/) with a [step-by-step verified build guide](docs/EXTERNAL-CONVERTER-BUILD.md). It compiles a separately organized trusted converter into the static frontend, tests its import in Chromium and runs Nginx only in production. A published npm SDK remains future work.
+
 Built-in native Allure results and JUnit XML converters are registered. CTRF JSON support is being verified in M4b. Additional format implementations are scheduled separately. Uploaded JavaScript modules and unreviewed runtime plugin execution are **not supported**.
 
 ```sh
