@@ -25,7 +25,8 @@ test("release files have stable sorted checksums and frozen source provenance", 
     assert.match(original, / {2}NOTICE\.txt\n/);
     assert.match(original, / {2}LICENSES\/0BSD\.txt\n/);
     assert.match(original, / {2}LICENSES\/Apache-2\.0\.txt\n/);
-    assert.match((await readFile(path.join(dist, "LICENSES", "0BSD.txt"), "utf8")), /AS IS/);
+    const bundledLicense = await readFile(path.join(dist, "LICENSES", "0BSD.txt"), "utf8");
+    assert.match(bundledLicense, /AS IS/);
     assert.match(original, / {2}provenance\.json\n/);
     assert.match(original, / {2}third-party-license-files\.json\n/);
     assert.equal(original.includes("  SHA256SUMS"), false);
