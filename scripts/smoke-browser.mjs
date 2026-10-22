@@ -548,6 +548,77 @@ try {
   }
   console.log(`${browserEngine} CSP and HTML-looking test-name regression passed.`);
 
+  // M6f: hostile report attachments remain binary-only even when a report
+  // lies about their type; uploaded SVG/HTML must never execute in the page.
+  const attachmentPage = await browser.newPage();
+  const attachmentErrors = [];
+  const attachmentOutgoing = [];
+  attachmentPage.on("pageerror", (error) => attachmentErrors.push(error.message));
+  attachmentPage.on("request", (request) => {
+    if (
+      !request.url().startsWith(`http://127.0.0.1:${port}/`) &&
+      !request.url().startsWith("data:") &&
+      !request.url().startsWith("blob:")
+    ) {
+      attachmentOutgoing.push(request.url());
+    }
+  });
+  await attachmentPage.goto(`http://127.0.0.1:${port}/`);
+  const attachmentReport = {
+    uuid: "m6f-attachment-case",
+    name: "M6f hostile attachment test",
+    status: "passed",
+    labels: [{ name: "suite", value: "Attachment isolation" }],
+    attachments: [
+      { name: "SVG script", source: "attack.svg", type: "image/svg+xml" },
+      { name: "Mislabeled HTML", source: "attack.html", type: "image/png" },
+    ],
+  };
+  const svgPayload = '<svg xmlns="http://www.w3.org/2000/svg" onload="window.__attachmentXss=1"/>';
+  const htmlPayload = '<script>window.__attachmentXss=1</script>';
+  await attachmentPage.locator("#allure-files-input").setInputFiles([
+    {
+      name: "m6f-result.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(attachmentReport)),
+    },
+    { name: "attack.svg", mimeType: "image/svg+xml", buffer: Buffer.from(svgPayload) },
+    { name: "attack.html", mimeType: "text/html", buffer: Buffer.from(htmlPayload) },
+  ]);
+  await attachmentPage.locator("#allure-importer").waitFor({ state: "hidden", timeout: 20_000 });
+  await attachmentPage.getByText("Attachment isolation", { exact: true }).first().waitFor({
+    state: "visible",
+    timeout: 15_000,
+  });
+  const attachmentState = await attachmentPage.evaluate(() => {
+    const loaded = window.allureReportData;
+    const doc = JSON.parse(atob(loaded["data/test-results/test-0.json"]));
+    const links = doc.attachments.map((entry) => entry.link);
+    return {
+      links,
+      payloads: links.map((link) => loaded[`data/attachments/${link.id}${link.ext}`]),
+      executed: window.__attachmentXss === 1,
+      activeNodes: document.querySelectorAll("script[onload], svg[onload], iframe[srcdoc]").length,
+    };
+  });
+  if (
+    attachmentState.links.length !== 2 ||
+    attachmentState.links.some(
+      (link) => link.contentType !== "application/octet-stream" || link.ext !== "",
+    ) ||
+    attachmentState.payloads[0] !== Buffer.from(svgPayload).toString("base64") ||
+    attachmentState.payloads[1] !== Buffer.from(htmlPayload).toString("base64") ||
+    attachmentState.executed ||
+    attachmentState.activeNodes ||
+    attachmentErrors.length ||
+    attachmentOutgoing.length
+  ) {
+    throw new Error(
+      `Hostile attachment browser regression: ${JSON.stringify(attachmentState)}; errors: ${attachmentErrors.join("; ")}; outgoing: ${attachmentOutgoing.join("; ")}`,
+    );
+  }
+  console.log(`${browserEngine} hostile SVG/HTML attachment isolation passed.`);
+
   // M6e: local imports must still work after the shell and trusted converter
   // modules have loaded, with all subsequent HTTP networking disabled.
   const offlineCases = [

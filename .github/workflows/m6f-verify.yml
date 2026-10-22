@@ -1,0 +1,45 @@
+name: M6f attachment isolation acceptance
+
+on:
+  push:
+    branches:
+      - milestone/m6f-attachment-isolation
+
+permissions:
+  contents: read
+
+concurrency:
+  group: m6f-attachment-isolation
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.16.0
+      - name: Strict source, attack regressions and import budget
+        run: |
+          npm ci
+          npm run verify
+          npm run bench:import
+      - name: Build pinned upstream and fixtures
+        run: |
+          npm run build:upstream
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+      - name: Chromium native UI and hostile attachment acceptance
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: node scripts/smoke-browser.mjs
+      - name: Install matching Firefox
+        run: node scripts/install-firefox.mjs
+      - name: Firefox native UI and hostile attachment acceptance
+        env:
+          BROWSER_ENGINE: firefox
+        run: node scripts/smoke-browser.mjs
