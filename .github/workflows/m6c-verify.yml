@@ -37,9 +37,7 @@ jobs:
           CHROME_BIN: /usr/bin/google-chrome
         run: node scripts/smoke-browser.mjs
       - name: Install matching Playwright Firefox
-        run: |
-          cd .allure-workspace/upstream
-          corepack yarn playwright install --with-deps firefox
+        run: node scripts/install-firefox.mjs
       - name: Firefox original Allure UI and malicious-name smoke
         env:
           BROWSER_ENGINE: firefox

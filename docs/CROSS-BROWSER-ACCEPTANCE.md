@@ -11,8 +11,8 @@ After the normal clean checkout `npm ci`, pinned upstream build and fixture setu
 
 ```sh
 CHROME_BIN=/usr/bin/google-chrome node scripts/smoke-browser.mjs
-# From the pinned upstream Yarn workspace, install its matched Playwright Firefox:
-(cd .allure-workspace/upstream && corepack yarn playwright install --with-deps firefox)
+# Resolve the Playwright binary from the pinned upstream's @playwright/test package:
+node scripts/install-firefox.mjs
 BROWSER_ENGINE=firefox node scripts/smoke-browser.mjs
 ```
 
