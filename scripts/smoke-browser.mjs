@@ -331,7 +331,10 @@ try {
     throw new Error(`M3 complex result normalization failed: ${JSON.stringify(dataCheck)}`);
   }
   const screenshotLeaf = richerPage.getByText("M3 screenshot test", { exact: false }).first();
-  if (!(await screenshotLeaf.isVisible())) {
+  // The upstream tree may finish expanding after importer.hide; avoid racing its first render.
+  try {
+    await screenshotLeaf.waitFor({ state: "visible", timeout: 2_500 });
+  } catch {
     await richerPage.getByText("M3 Validation", { exact: true }).first().click();
   }
   try {

@@ -27,25 +27,36 @@ test("Enter and Space open the file picker; repeated and unrelated keys do not",
   const dropTarget = eventTarget();
   const directory = eventTarget();
   let pickerClicks = 0;
-  const files = { ...eventTarget(), click: () => { pickerClicks += 1; } };
+  const files = {
+    ...eventTarget(),
+    click: () => {
+      pickerClicks += 1;
+    },
+  };
   const unbind = bindBrowserImportEvents({
     dropTarget,
     inputs: [directory, files],
     onFiles: () => {},
-    onError: (error) => { throw error; },
+    onError: (error) => {
+      throw error;
+    },
   });
   let prevented = 0;
   for (const key of ["Enter", " ", "x"]) {
     dropTarget.dispatch("keydown", {
       key,
       repeat: false,
-      preventDefault() { prevented += 1; },
+      preventDefault() {
+        prevented += 1;
+      },
     });
   }
   dropTarget.dispatch("keydown", {
     key: "Enter",
     repeat: true,
-    preventDefault() { prevented += 1; },
+    preventDefault() {
+      prevented += 1;
+    },
   });
   assert.equal(pickerClicks, 2);
   assert.equal(prevented, 2);

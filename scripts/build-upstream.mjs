@@ -54,7 +54,12 @@ run("corepack", ["yarn", "build"], workspace);
 
 await mkdir(dist, { recursive: true });
 await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-for (const moduleName of ["bootstrap.mjs", "browser-import.mjs", "import-generated.mjs", "importer.css"]) {
+for (const moduleName of [
+  "bootstrap.mjs",
+  "browser-import.mjs",
+  "import-generated.mjs",
+  "importer.css",
+]) {
   await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
 }
 run("npm", ["run", "build:browser"]);
