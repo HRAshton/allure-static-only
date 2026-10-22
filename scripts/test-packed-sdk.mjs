@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { mkdtemp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,7 +21,11 @@ try {
   }
 
   const archive = JSON.parse(
-    run("npm", ["pack", packagePath, "--json", "--ignore-scripts", "--pack-destination", sandbox], root),
+    run(
+      "npm",
+      ["pack", packagePath, "--json", "--ignore-scripts", "--pack-destination", sandbox],
+      root,
+    ),
   );
   const entry = archive[0];
   if (!entry || typeof entry.filename !== "string") {
