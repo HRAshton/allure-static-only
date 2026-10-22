@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { lstat, readFile, readdir, writeFile } from "node:fs/promises";
+import { lstat, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -102,7 +102,10 @@ export async function verifyRelease(dist = defaultDist) {
   if (foundProvenance !== `${JSON.stringify(expectedProvenance, null, 2)}\n`) {
     throw new Error("Release provenance differs from checked-in lockfiles.");
   }
-  const expectedNotice = await readFile(path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"), "utf8");
+  const expectedNotice = await readFile(
+    path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"),
+    "utf8",
+  );
   if ((await readFile(path.join(dist, "NOTICE.txt"), "utf8")) !== expectedNotice) {
     throw new Error("Release attribution notice differs from checked-in source.");
   }

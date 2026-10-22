@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import test from "node:test";
@@ -22,8 +22,8 @@ test("release files have stable sorted checksums and frozen source provenance", 
     await prepareRelease(dist);
     await verifyRelease(dist);
     const original = await readFile(path.join(dist, "SHA256SUMS"), "utf8");
-    assert.match(original, /  NOTICE\.txt\n/);
-    assert.match(original, /  provenance\.json\n/);
+    assert.match(original, / {2}NOTICE\.txt\n/);
+    assert.match(original, / {2}provenance\.json\n/);
     assert.equal(original.includes("  SHA256SUMS"), false);
     await prepareRelease(dist);
     assert.equal(await readFile(path.join(dist, "SHA256SUMS"), "utf8"), original);
