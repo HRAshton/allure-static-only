@@ -575,7 +575,7 @@ try {
     ],
   };
   const svgPayload = '<svg xmlns="http://www.w3.org/2000/svg" onload="window.__attachmentXss=1"/>';
-  const htmlPayload = '<script>window.__attachmentXss=1</script>';
+  const htmlPayload = "<script>window.__attachmentXss=1</script>";
   await attachmentPage.locator("#allure-files-input").setInputFiles([
     {
       name: "m6f-result.json",

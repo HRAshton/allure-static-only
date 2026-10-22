@@ -5,7 +5,12 @@ import { awesomeReportData } from "../src/allure-adapter/awesome-data.ts";
 
 test("untrusted attachment types cannot influence active browser preview extensions", () => {
   const samples = [
-    { sourcePath: "attack.svg", mimeType: "image/svg+xml", ext: "", type: "application/octet-stream" },
+    {
+      sourcePath: "attack.svg",
+      mimeType: "image/svg+xml",
+      ext: "",
+      type: "application/octet-stream",
+    },
     { sourcePath: "spoof.html", mimeType: "image/png", ext: "", type: "application/octet-stream" },
     { sourcePath: "payload.js", mimeType: "text/plain", ext: "", type: "application/octet-stream" },
     { sourcePath: "report.png", mimeType: "text/html", ext: "", type: "application/octet-stream" },
