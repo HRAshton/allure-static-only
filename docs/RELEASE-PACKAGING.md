@@ -41,5 +41,8 @@ See `docs/INDEPENDENT-BUILD-VERIFICATION.md` before claiming reproducibility.
 The NOTICE is provisional. Generated `third-party-license-files.json`
 indexes and hashes the bundler-emitted `*.LICENSE.txt` companion files;
 it is not a comprehensive license inventory or a grant of rights.
-No project-wide LICENSE has been approved, and the dependencies actually
-bundled by the upstream frontend require review before publication. Do not issue a release tag based on this milestone alone.
+Original project code is now approved under 0BSD, and pinned Allure is
+Apache-2.0. This alone does not clear the actual upstream bundle:
+`docs/RC1-THIRD-PARTY-LICENSE-REVIEW.md` inventories observed bundled
+license comments and open redistribution obligations. Do not issue a release
+tag based on this milestone alone.

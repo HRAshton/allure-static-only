@@ -27,16 +27,20 @@ if the release owner formally accepts this reproducibility limitation.
 
 ## Owner-controlled release gates still open
 
-1. **Distribution license and notices**: choose and approve a project
-   license, review every bundled third-party license obligation and replace
-   the provisional `NOTICE.txt` with legally complete attribution.
+1. **Distribution license and notices**: original project source is 0BSD,
+   while pinned upstream Allure is Apache-2.0; complete the dependency-closure
+   attribution review in `docs/RC1-THIRD-PARTY-LICENSE-REVIEW.md` and replace
+   the provisional `NOTICE.txt` with legally complete distribution notices.
 2. **npm publication**: confirm scope ownership, registry destination,
    package rights and authorized publisher; remove SDK `private: true` only
    after approval, publish, then validate a clean **registry-installed**
    consumer/host, not merely the local candidate tarball.
-3. **GitHub merge enforcement**: add repository ruleset/branch protection
-   requiring the accepted checks on `main`, reviews if desired and
-   squash-only merges. Connector APIs cannot force this without admin access.
+3. **GitHub merge enforcement**: `main` is now protected, but current
+   active rulesets require unrelated Python/container contexts and CodeQL
+   and block PR #24 even after the actual `source-and-reuse` checks passed.
+   Replace those requirements with checks this repository actually runs;
+   retain PR-only squash merges. Align human-review rules with intended
+   Renovate automerge without a CI-bypassing bot exemption.
 4. **Human acceptance**: complete a real screen-reader/keyboard and responsive
    upstream UI walkthrough, attachment preview checks and peak browser memory
    testing under larger user inputs; record results or expressly accept the
