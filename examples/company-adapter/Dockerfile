@@ -1,4 +1,4 @@
-# Source-overlay integration: an independently maintained converter is compiled at build time.
+# Installed-tarball SDK integration: a trusted adapter is compiled at build time.
 # Runtime image is Nginx only; Node, git, Yarn and Chromium are NOT shipped.
 FROM node:22.16.0-bookworm AS builder
 RUN apt-get update \
@@ -12,7 +12,14 @@ COPY . .
 COPY examples/company-adapter/converter.ts src/extensions/company-results.ts
 COPY examples/company-adapter/converters.ts src/config/converters.ts
 
-RUN npm ci && npm run verify && npm run build:upstream
+# Install exactly the locally packed, separately versioned SDK distribution.
+# 'import type' is erased at browser compile time: only Nginx and static JS ship.
+RUN npm ci && npm run build:sdk \
+    && npm pack ./packages/converter-sdk --pack-destination /tmp \
+    && npm install --no-save --offline --ignore-scripts --no-audit --no-fund \
+       /tmp/allure-static-only-converter-sdk-0.1.0-rc.1.tgz \
+    && node -e "if (require('./node_modules/@allure-static-only/converter-sdk/package.json').version !== '0.1.0-rc.1') process.exit(1)" \
+    && npm run verify && npm run build:upstream
 RUN CHROME_BIN=/usr/bin/chromium node scripts/smoke-external-adapter.mjs
 RUN cp examples/company-adapter/example.company.json dist/demo/company-sample.json
 
