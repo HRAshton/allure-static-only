@@ -94,10 +94,29 @@ try {
     );
   }
   await page.locator("#allure-importer").waitFor({ state: "hidden", timeout: 2_000 });
-  await page.getByText("M1 browser fixture passing test", { exact: false }).first().waitFor({
-    state: "visible",
-    timeout: 60_000,
-  });
+  try {
+    await page.getByText("M1 browser fixture passing test", { exact: false }).first().waitFor({
+      state: "visible",
+      timeout: 15_000,
+    });
+  } catch (cause) {
+    const state = await page.evaluate(() => ({
+      reportDataReady: window.allureReportDataReady,
+      loadedPaths: Object.keys(window.allureReportData ?? {}).slice(0, 30),
+      renderedText: document.getElementById("app")?.innerText.slice(0, 2_000),
+      appMarkup: document.getElementById("app")?.innerHTML.slice(0, 500),
+      url: window.location.href,
+    }));
+    throw new Error(
+      [
+        `Upstream UI fixture not visible: ${JSON.stringify(state)}`,
+        `page errors: ${errors.join("; ")}`,
+        `console: ${consoleErrors.join("; ")}`,
+        `outgoing: ${outgoing.join("; ")}`,
+      ].join("\n"),
+      { cause },
+    );
+  }
   if (errors.length || outgoing.length || consoleErrors.length) {
     throw new Error(
       `Browser errors: ${errors.join("; ")}; console: ${consoleErrors.join("; ")}; external requests: ${outgoing.join("; ")}`,
