@@ -65,7 +65,9 @@ export function defineConverters(config: ConverterConfiguration): Readonly<Conve
     if (
       !Array.isArray(converter.extensions) ||
       converter.extensions.length === 0 ||
-      converter.extensions.some((ext: unknown) => typeof ext !== "string" || !/^\.[a-z0-9]+$/.test(ext))
+      converter.extensions.some(
+        (ext: unknown) => typeof ext !== "string" || !/^\.[a-z0-9]+$/.test(ext),
+      )
     ) {
       throw new Error(`Converter ${converter.id} must declare lowercase file extensions.`);
     }
