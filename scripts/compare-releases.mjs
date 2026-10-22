@@ -22,8 +22,10 @@ export async function compareReleaseTrees(first, second) {
       { length: Math.max(leftLines.length, rightLines.length) },
       (_, position) => position,
     ).find((position) => leftLines[position] !== rightLines[position]);
+    const position = index ?? 0;
     throw new Error(
-      `Separate release builds are not byte-identical (checksum entry ${index ?? "unknown"}).`,
+      `Separate release builds are not byte-identical (entry ${position}).\n` +
+        `first: ${leftLines[position] ?? "<missing>"}\nsecond: ${rightLines[position] ?? "<missing>"}`,
     );
   }
   return left.trim().split("\n").length;

@@ -1,14 +1,12 @@
 import { execFileSync } from "node:child_process";
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, readFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { CONTENT_SECURITY_POLICY } from "./static-security.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const lock = JSON.parse(await readFile(path.join(root, "upstream.lock.json"), "utf8"));
 const workspace = path.join(root, ".allure-workspace", "upstream");
-const dist = path.join(root, "dist");
 
 const run = (bin, args, cwd = root) =>
   execFileSync(bin, args, {
@@ -52,76 +50,6 @@ if (process.argv.includes("--probe")) {
 run("corepack", ["yarn", "install", "--immutable"], workspace);
 run("corepack", ["yarn", "build"], workspace);
 
-// Never mix a new release with stale files from an earlier upstream build.
-await rm(dist, { recursive: true, force: true });
-await mkdir(dist, { recursive: true });
-await cp(path.join(workspace, lock.frontendAssets), dist, { recursive: true, force: true });
-for (const moduleName of [
-  "bootstrap.mjs",
-  "browser-import.mjs",
-  "import-generated.mjs",
-  "importer.css",
-]) {
-  await cp(path.join(root, "src", "shell", moduleName), path.join(dist, moduleName));
-}
-run("npm", ["run", "build:browser"]);
-await mkdir(path.join(dist, "demo"), { recursive: true });
-await cp(
-  path.join(root, "fixtures", "demo-junit.xml"),
-  path.join(dist, "demo", "junit-sample.xml"),
-);
-await cp(
-  path.join(root, "fixtures", "demo-ctrf.json"),
-  path.join(dist, "demo", "ctrf-sample.json"),
-);
-
-const manifest = JSON.parse(await readFile(path.join(dist, "manifest.json"), "utf8"));
-const appScript = manifest["main.js"];
-const appCss = manifest["main.css"];
-const cssTag = typeof appCss === "string" ? `<link rel="stylesheet" href="./${appCss}" />` : "";
-if (typeof appScript !== "string" || !/^app-[a-f0-9]+\.js$/.test(appScript)) {
-  throw new Error("Unexpected upstream webpack main.js manifest entry.");
-}
-const html = `<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <meta http-equiv="Content-Security-Policy" content="${CONTENT_SECURITY_POLICY}" />
-    <meta name="referrer" content="no-referrer" />
-    <base href="./" />
-    <title>Allure Static Only</title>
-    <link rel="icon" href="data:," />
-    <link rel="stylesheet" href="./importer.css" />
-    ${cssTag}
-    <script src="./bootstrap.mjs"></script>
-    <script type="module" src="./import-generated.mjs"></script>
-    <script defer src="./${appScript}"></script>
-  </head>
-  <body>
-    <main id="allure-importer">
-      <h1>Allure Static Demo</h1>
-      <p>Drop JUnit XML, CTRF JSON or native Allure results here, or select a file or directory.
-         Reports are processed in your browser and never uploaded.</p>
-      <p><a href="./demo/junit-sample.xml" download="junit-sample.xml">
-         Download a sample JUnit report</a> or
-         <a href="./demo/ctrf-sample.json" download="ctrf-sample.json">
-         download a sample CTRF report</a> to try the importer.</p>
-      <div id="allure-drop-target" role="button" tabindex="0"
-           aria-controls="allure-files-input" aria-label="Choose report files or drop them here">
-        <p>Drop report files here, or press Enter or Space to select files.</p>
-      </div>
-      <label for="allure-input">Report directory</label>
-      <input id="allure-input" type="file" webkitdirectory multiple />
-      <label for="allure-files-input">Individual files</label>
-      <input id="allure-files-input" type="file" multiple />
-      <button id="allure-cancel" type="button" hidden>Cancel import</button>
-      <p id="allure-import-progress" role="status" aria-live="polite"></p>
-      <p id="allure-import-error" role="alert"></p>
-    </main>
-    <div id="app"></div>
-  </body>
-</html>
-`;
-await writeFile(path.join(dist, "index.html"), html, "utf8");
-console.log("Built static Allure shell in dist/; serve with Nginx for the browser smoke test.");
+// Assemble the static shell separately, so independently clean host builds can
+// consume the same verified pinned upstream frontend snapshot.
+run(process.execPath, ["scripts/assemble-static.mjs", path.join(workspace, lock.frontendAssets)]);

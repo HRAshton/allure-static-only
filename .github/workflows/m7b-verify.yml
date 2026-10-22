@@ -1,4 +1,4 @@
-name: M7b two independent clean build acceptance
+name: RC1 consolidated engineering acceptance
 
 on:
   push:
@@ -9,39 +9,59 @@ permissions:
   contents: read
 
 concurrency:
-  group: m7b-independent-builds
+  group: rc1-consolidated-acceptance
   cancel-in-progress: true
 
 jobs:
-  compare:
+  acceptance:
     runs-on: ubuntu-24.04
-    timeout-minutes: 55
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22.16.0
-      - name: Strict source, manifest and mismatch regressions
+      - name: Strict, integration and candidate package gates
         run: |
           npm ci
           npm run verify
-      - name: Build same commit independently and compare all static asset bytes
+          npm run bench:import
+          npm run build:sdk
+          npm run test:sdk-package
+      - name: Build pinned Allure once and verify full distribution integrity
+        run: |
+          npm run build:upstream
+          npm run release:prepare
+          npm run release:verify
+          (cd dist && sha256sum -c SHA256SUMS > /dev/null)
+      - name: Independently assemble clean host exports from verified upstream snapshot
         shell: bash
         run: |
           set -euo pipefail
-          first="$RUNNER_TEMP/allure-clean-a"
-          second="$RUNNER_TEMP/allure-clean-b"
+          source_assets="$GITHUB_WORKSPACE/.allure-workspace/upstream/packages/web-awesome/dist/multi"
+          first="$RUNNER_TEMP/host-clean-a"
+          second="$RUNNER_TEMP/host-clean-b"
+          test -f "$source_assets/manifest.json"
           mkdir -p "$first" "$second"
           git archive HEAD | tar -xf - -C "$first"
           git archive HEAD | tar -xf - -C "$second"
           for directory in "$first" "$second"; do
             (
               cd "$directory"
-              npm ci
-              npm run build:upstream
+              npm ci --no-audit --no-fund
+              node scripts/assemble-static.mjs "$source_assets"
               npm run release:prepare
               npm run release:verify
-              (cd dist && sha256sum -c SHA256SUMS)
             )
           done
           node scripts/compare-releases.mjs "$first/dist" "$second/dist"
+          cmp "$first/dist/SHA256SUMS" dist/SHA256SUMS
+      - name: Existing Chromium real upstream import and CSP acceptance
+        env:
+          CHROME_BIN: /usr/bin/google-chrome
+        run: |
+          node scripts/prepare-fixture.mjs
+          node scripts/prepare-m3-fixture.mjs
+          (cd .allure-workspace/m1-fixture-results && zip -q ../m3-fixture.zip *-result.json)
+          (cd .allure-workspace/m3-complex-results && zip -q ../m3-complex.zip *)
+          node scripts/smoke-browser.mjs

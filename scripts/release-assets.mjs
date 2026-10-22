@@ -71,6 +71,17 @@ async function enumerateFiles(root) {
   return paths;
 }
 
+/** Enumerate emitted chunk-adjacent license texts; this is not a complete legal audit. */
+async function noticeFileInventory(dist) {
+  const filenames = (await enumerateFiles(dist)).filter((name) => name.endsWith(".LICENSE.txt"));
+  const notices = [];
+  for (const filename of filenames) {
+    const content = await readFile(path.join(dist, ...filename.split("/")));
+    notices.push({ filename, sha256: sha256(content) });
+  }
+  return { schemaVersion: 1, caveat: "Bundler-emitted license texts only", notices };
+}
+
 /** Hash every static asset, including NOTICE and provenance; exclude only the hash file itself. */
 export async function createReleaseManifest(dist = defaultDist) {
   const files = await enumerateFiles(dist);
@@ -86,6 +97,10 @@ export async function prepareRelease(dist = defaultDist) {
   const notice = await readFile(path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"), "utf8");
   const provenance = await releaseProvenance();
   await enumerateFiles(dist);
+  await writeFile(
+    path.join(dist, "third-party-license-files.json"),
+    `${JSON.stringify(await noticeFileInventory(dist), null, 2)}\n`,
+  );
   await writeFile(path.join(dist, "NOTICE.txt"), notice, "utf8");
   await writeFile(path.join(dist, "provenance.json"), `${JSON.stringify(provenance, null, 2)}\n`);
   await writeFile(path.join(dist, "SHA256SUMS"), await createReleaseManifest(dist));
@@ -101,6 +116,14 @@ export async function verifyRelease(dist = defaultDist) {
   const foundProvenance = await readFile(path.join(dist, "provenance.json"), "utf8");
   if (foundProvenance !== `${JSON.stringify(expectedProvenance, null, 2)}\n`) {
     throw new Error("Release provenance differs from checked-in lockfiles.");
+  }
+  const expectedInventory = `${JSON.stringify(await noticeFileInventory(dist), null, 2)}\n`;
+  const actualInventory = await readFile(
+    path.join(dist, "third-party-license-files.json"),
+    "utf8",
+  );
+  if (actualInventory !== expectedInventory) {
+    throw new Error("Bundler-emitted license text inventory differs from the static assets.");
   }
   const expectedNotice = await readFile(
     path.join(projectRoot, "docs", "RELEASE-NOTICE.txt"),

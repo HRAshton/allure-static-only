@@ -24,6 +24,7 @@ test("release files have stable sorted checksums and frozen source provenance", 
     const original = await readFile(path.join(dist, "SHA256SUMS"), "utf8");
     assert.match(original, / {2}NOTICE\.txt\n/);
     assert.match(original, / {2}provenance\.json\n/);
+    assert.match(original, / {2}third-party-license-files\.json\n/);
     assert.equal(original.includes("  SHA256SUMS"), false);
     await prepareRelease(dist);
     assert.equal(await readFile(path.join(dist, "SHA256SUMS"), "utf8"), original);
@@ -42,6 +43,25 @@ test("unexpected files and symlinks fail closed", async () => {
     await assert.rejects(verifyRelease(dist), /SHA256SUMS mismatch/);
     await symlink(path.join(dist, "index.html"), path.join(dist, "linked.html"));
     await assert.rejects(verifyRelease(dist), /Symlink not allowed/);
+  } finally {
+    await rm(dist, { recursive: true, force: true });
+  }
+});
+test("bundler-emitted license files are inventoried, hashed and tamper-evident", async () => {
+  const dist = await fixture();
+  try {
+    await writeFile(path.join(dist, "nested", "vendor.js.LICENSE.txt"), "MIT license text");
+    await prepareRelease(dist);
+    await verifyRelease(dist);
+    const index = JSON.parse(
+      await readFile(path.join(dist, "third-party-license-files.json"), "utf8"),
+    );
+    assert.equal(index.schemaVersion, 1);
+    assert.equal(index.notices.length, 1);
+    assert.equal(index.notices[0].filename, "nested/vendor.js.LICENSE.txt");
+    assert.match(index.notices[0].sha256, /^[a-f0-9]{64}$/);
+    await writeFile(path.join(dist, "nested", "vendor.js.LICENSE.txt"), "edited license");
+    await assert.rejects(verifyRelease(dist), /SHA256SUMS mismatch/);
   } finally {
     await rm(dist, { recursive: true, force: true });
   }
