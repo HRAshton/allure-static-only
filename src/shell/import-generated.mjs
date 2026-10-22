@@ -98,12 +98,30 @@ async function loadConverterModules() {
   };
 }
 
+// Preload the trusted converter graph while the static site is still online,
+// so local files can be imported after a user disconnects from the network.
+// Resolve rejections as data to avoid an unhandled promise before any import.
+const warmedConverters =
+  typeof document === "undefined"
+    ? undefined
+    : loadConverterModules().then(
+        (modules) => ({ modules }),
+        (error) => ({ error }),
+      );
+
 /** Converts a registered format to upstream Awesome data without server-side processing. */
 export async function readConvertedReport(files, options = {}, loadModules = loadConverterModules) {
   const { signal, onProgress } = options;
   assertNotCancelled(signal);
+  const loaded =
+    loadModules === loadConverterModules && warmedConverters
+      ? await warmedConverters
+      : { modules: await loadModules() };
+  if ("error" in loaded) {
+    throw loaded.error;
+  }
   const { converterRegistry, importBrowserReport, awesomeReportData, unzipReportFiles } =
-    await loadModules();
+    loaded.modules;
   assertNotCancelled(signal);
   const sourceFiles =
     files.length === 1 && /\.zip$/i.test(files[0].name)

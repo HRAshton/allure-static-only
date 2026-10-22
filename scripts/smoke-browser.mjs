@@ -547,6 +547,58 @@ try {
     );
   }
   console.log(`${browserEngine} CSP and HTML-looking test-name regression passed.`);
+
+  // M6e: local imports must still work after the shell and trusted converter
+  // modules have loaded, with all subsequent HTTP networking disabled.
+  const offlineCases = [
+    { name: "generated", input: "#allure-input", fixture, suite: "Static Import", count: 1 },
+    {
+      name: "junit",
+      input: "#allure-files-input",
+      fixture: path.join(root, "fixtures", "demo-junit.xml"),
+      suite: "Authentication",
+      count: 6,
+    },
+  ];
+  for (const testCase of offlineCases) {
+    const context = await browser.newContext();
+    try {
+      const localPage = await context.newPage();
+      const failures = [];
+      const errors = [];
+      localPage.on("requestfailed", (request) => failures.push(request.url()));
+      localPage.on("pageerror", (error) => errors.push(error.message));
+      await localPage.goto(`http://127.0.0.1:${port}/`);
+      await localPage.waitForLoadState("networkidle");
+      await context.setOffline(true);
+      await localPage.locator(testCase.input).setInputFiles(testCase.fixture);
+      await localPage.locator("#allure-importer").waitFor({
+        state: "hidden",
+        timeout: 20_000,
+      });
+      await localPage.getByText(testCase.suite, { exact: true }).first().waitFor({
+        state: "visible",
+        timeout: 15_000,
+      });
+      const offlineState = await localPage.evaluate(() => ({
+        ready: window.allureReportDataReady,
+        totals: JSON.parse(atob(window.allureReportData["widgets/statistic.json"])).total,
+      }));
+      if (
+        offlineState.ready !== true ||
+        offlineState.totals !== testCase.count ||
+        failures.length > 0 ||
+        errors.length > 0
+      ) {
+        throw new Error(
+          `Offline ${testCase.name} import failed: ${JSON.stringify(offlineState)}; HTTP failures: ${failures.join("; ")}; page errors: ${errors.join("; ")}`,
+        );
+      }
+      console.log(`${browserEngine} offline-after-load ${testCase.name} import passed.`);
+    } finally {
+      await context.close();
+    }
+  }
 } finally {
   await browser?.close();
   await new Promise((resolve) => server.close(resolve));
