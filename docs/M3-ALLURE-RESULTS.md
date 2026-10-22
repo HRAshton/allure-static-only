@@ -1,36 +1,39 @@
-# M3: native Allure results converter spike
+# M3: native Allure results and ZIP conversion
 
-Status: **draft**. Allure UI integration and ZIP support are not complete.
+Status: **accepted** following the successful M3 verification run. The browser integration uses the real upstream Allure Awesome frontend, without a frontend fork or runtime backend.
 
-This isolated converter reads imported `*-result.json` files through the converter port and returns the normalized report model. It maps status, full name, failure message, durations, labels, nested steps, and attachment references. Unknown status is preserved as unknown; missing timing is not fabricated.
+## Implemented
 
-The converter never calls `fetch` or uploads data. It rejects malformed UTF-8/JSON, malformed arrays, duplicate UUIDs, unsafe attachment paths and excessive step nesting (32) / total steps per test (10,000). The containing browser file adapter imposes input size limits.
+- Import native `*-result.json` files from a directory or `allure-results.zip` in the browser, using strict TypeScript converters.
+- Normalize status, name, failure message, duration, labels, steps, attachments, and test history.
+- Group retries by Allure `historyId`: only the latest attempt appears in the summary tree and counters, with older attempts available as retries.
+- Translate normalized results into the pinned Allure Awesome widget/data model in-browser.
+- Map attachments to opaque filenames. PNG screenshots are included; unsupported potentially active attachment MIME types are treated as `application/octet-stream` rather than executable previews.
+- Load the original Allure frontend from static assets. Importing report files does not contact a report upload API.
 
-## Known missing acceptance gates
+## ZIP safety boundaries
 
-- Import ZIP via a strictly bounded, path-safe archive adapter (including compressed/expanded byte and file-entry limits).
-- Resolve attachment content against included files and provide it to the Allure data adapter.
-- Feed normalized results through the **real** upstream Allure UI's generated widget schema.
-- Verify screenshots, retries, fixture steps, damaged fixtures and same-name tests end-to-end.
-- Complete M1's upstream browser feasibility gate and M2's browser wiring.
+The ZIP32 reader handles stored and deflated entries through local browser APIs. It rejects traversal or absolute paths, duplicate or overlapping entries, mismatched central/local filenames and metadata, corrupt checksums, symbolic links, encrypted archives, ZIP64, unrecognized compression methods, excess file counts or sizes, and suspicious compression ratios. Decompression uses bounded streaming; no user-provided archive code is executed.
 
-Five focused `node:test` cases and strict TypeScript type-check passed in a local Node 22.16 environment. This does not establish Biome, archive security or browser compatibility. Do **not** merge until the milestone gates are complete.
+## Verification
 
-## M3 browser adapter spike
+The following checks passed in GitHub Actions on the complete M3 source and test fixtures:
 
-- A strict TypeScript build compiles the portable converter, runtime input port and Allure-specific adapter into native browser ESM in `dist/app/`.
-- The static import shell recognizes `*-result.json` input and generates the minimum report widgets expected by the original Allure 3 frontend, entirely in the browser.
-- A separate browser smoke imports the **raw** Allure fixture, checks rendering of a passing test and asserts no report uploads.
-- Attachment names are mapped into opaque, safe generated filenames; missing or ambiguous references fail closed.
+- Strict TypeScript, Biome, architecture rules and unit tests.
+- Clean pinned upstream Allure build and generated-report reference smoke.
+- Browser import of raw Allure JSON and a ZIP, rendered in the **original Allure UI**.
+- Expanded browser fixture with two passed, one failed and one skipped visible tests; a retried case; nested steps; and PNG attachment bytes.
+- Browser smoke audit for external report requests.
 
-**Not yet complete:** safe ZIP import, broad attachment/step/retry compatibility fixtures, and cross-browser verification. Do not merge M3 until these are verified.
+**Verified run:** https://github.com/HRAshton/allure-static-only/actions/runs/39815147206
 
-## Bounded browser ZIP imports
+The final branch is rebased onto current `main`. Its temporary branch-only verification workflow was excluded from the merge; the application, test and documentation files remain unchanged from the verified integration except for this status update.
 
-ZIP32 stored and deflated entries are parsed using browser File APIs and the native `DecompressionStream`. The extractor rejects absolute/traversal paths, duplicate entry names, checksum failures, ZIP64/encrypted data, oversized source and decompressed bytes, excess entry counts, symlinks and abnormal compression ratios. Streamed decompression is capped to the advertised uncompressed size. The input remains local; the CI smoke imports the same fixture as a ZIP and checks the real Allure UI. ZIP archives holding a generated Awesome report are not yet supported by this route.
+## Known limitations and later work
 
-## Expanded acceptance tests
+- ZIP support is for **raw Allure results**, not arbitrary ZIP archives of already-generated Awesome output.
+- Previewing every attachment type, full fidelity of unusual Allure result metadata, and additional format converters are outside M3.
+- Cancellation occurs at asynchronous input boundaries; interrupted decompression and large-file performance need ongoing hardening.
+- Cross-browser and Nginx deployment matrices, restrictive CSP, and broader security/performance assurance remain M6/M7 release-candidate gates.
 
-The M3 fixtures now cover passed, failed, and skipped results; historical retry attempts grouped by `historyId` and start timestamp; nested steps; and binary PNG attachments. Test history is available in the real Allure UI contract, while only the latest attempt counts toward the visible tree and statistics. The smoke test checks the generated widget statistics, retried attempt, PNG signature and nested step, then opens the result in the upstream UI. HTML and other potentially active attachments are mapped to `application/octet-stream` rather than an inline active preview.
-
-The ZIP extractor checks consistency between central and local headers, rejects overlapping entry ranges, and rejects deceptive local filenames. The browser import resolves attachment file paths unambiguously, rather than using a basename-only match.
+M3 establishes working raw-results import, not a release-candidate-quality guarantee for arbitrary large or malformed report collections.
