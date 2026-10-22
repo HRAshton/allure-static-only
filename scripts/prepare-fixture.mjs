@@ -45,7 +45,9 @@ execFileSync(
     maxBuffer: 10 * 1024 * 1024,
     env: {
       ...process.env,
-      NODE_OPTIONS: [process.env.NODE_OPTIONS, "--experimental-strip-types"].filter(Boolean).join(" "),
+      NODE_OPTIONS: [process.env.NODE_OPTIONS, "--experimental-strip-types"]
+        .filter(Boolean)
+        .join(" "),
     },
   },
 );
