@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   AmbiguousReportError,
-  UnsupportedReportError,
   chooseConverter,
+  UnsupportedReportError,
 } from "../src/runtime/choose-converter.ts";
 
 const input = [{ path: "results.xml", byteLength: 0, read: async () => new Uint8Array() }];
