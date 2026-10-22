@@ -36,13 +36,12 @@ const valid = (id, score = 100) => ({
   },
 });
 
-test("API version 1 is registered in the default source configuration", () => {
+test("API v1 preserves built-in converters and allows registered extensions", () => {
   assert.equal(CONVERTER_API_VERSION, 1);
   assert.equal(registered.apiVersion, 1);
-  assert.deepEqual(
-    registered.converters.map(({ id }) => id),
-    ["allure-results", "junit-xml", "ctrf-json"],
-  );
+  const ids = registered.converters.map(({ id }) => id);
+  assert.deepEqual(ids.slice(0, 3), ["allure-results", "junit-xml", "ctrf-json"]);
+  assert.equal(new Set(ids).size, ids.length);
   assert.equal(Object.isFrozen(registered.converters), true);
 });
 

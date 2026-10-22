@@ -1,0 +1,20 @@
+{
+  "kind": "acme.test-report.v1",
+  "tests": [
+    {
+      "name": "External converter renders a passing result",
+      "status": "passed",
+      "durationMs": 42
+    },
+    {
+      "name": "External converter <script> remains inert",
+      "status": "failed",
+      "durationMs": 17,
+      "message": "Expected simulated failure"
+    },
+    {
+      "name": "External converter supports skipped results",
+      "status": "skipped"
+    }
+  ]
+}
